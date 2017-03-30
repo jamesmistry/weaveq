@@ -136,6 +136,16 @@ class TestNestedField(unittest.TestCase):
         data["test_field1"]["test_field2"] = "test_new_value"
         self.assertEqual(subject.value(), "test_value")
 
+    def test_value_cache_clear(self):
+        """Target value cache is cleared correctly.
+        """
+        data = {"test_field1" : { "test_field2" : "test_value" }}
+        subject = NestedField(data, "test_field1.test_field2")
+        self.assertEqual(subject.value(), "test_value")
+        data["test_field1"]["test_field2"] = "test_new_value"
+        subject.clear_cache()
+        self.assertEqual(subject.value(), "test_new_value")
+
 class TestIndexResultHandler(unittest.TestCase):
         """Tests IndexResultHandler
         """
@@ -662,4 +672,47 @@ class TestJiggleQ(unittest.TestCase):
 
         self.assertEqual(r.results, [{"name_id":1,"data":"record_a"}])
 
+    def test_multistep_pivot_pivot(self):
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"record_a"},{"id":2,"name":"record_b"},{"id":2,"name":"record_c"},{"id":2,"name":"record_b"}]])
+        q2 = MockDataSource([[{"name_id":2,"count":10,"data":"record_b"},{"name_id":2,"count":11,"data":"record_b"},{"name_id":3,"count":12,"data":"record_e"}]])
+        q3 = MockDataSource([[{"id":20,"record":"record_e"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
+        s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id"))).pivot_to(q3, F("data") == F("record"))
+        s.result_handler(r)
+        s.execute(scroll=False)
+
+        self.assertEqual(r.results, [{"id":30,"record":"record_b"},{"id":31,"record":"record_b"}])
+
+    def test_multistep_join_join(self):
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"record_a"},{"id":2,"name":"record_b"},{"id":3,"name":"record_c"},{"id":4,"name":"record_b"}]])
+        q2 = MockDataSource([[{"name_id":2,"count":10,"data":"record_a"},{"name_id":6,"count":11,"data":"record_c"},{"name_id":5,"count":12,"data":"record_b"}]])
+        q3 = MockDataSource([[{"id":20,"record":"record_c"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
+        s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="step1", exclude_empty_joins=True).join_to(q3, F("data") == F("record"), field="step2", exclude_empty_joins=True)
+        s.result_handler(r)
+        s.execute(scroll=False)
+
+        self.assertEqual(r.results, [{"id":21,"record":"record_a","step2":{"name_id":2,"count":10,"data":"record_a","step1":{"id":2,"name":"record_b"}}}])
+
+    def test_multistep_pivot_join(self):
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"record_a"},{"id":2,"name":"record_b"},{"id":2,"name":"record_c"},{"id":2,"name":"record_b"}]])
+        q2 = MockDataSource([[{"name_id":2,"count":10,"data":"record_b"},{"name_id":2,"count":11,"data":"record_d"},{"name_id":3,"count":12,"data":"record_e"}]])
+        q3 = MockDataSource([[{"id":20,"record":"record_e"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
+        s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id"))).join_to(q3, F("data") == F("record"), exclude_empty_joins=True)
+        s.result_handler(r)
+        s.execute(scroll=False)
+
+        self.assertEqual(r.results, [{"id":30,"record":"record_b","joined_data":{"name_id":2,"count":10,"data":"record_b"}},{"id":31,"record":"record_b","joined_data":{"name_id":2,"count":10,"data":"record_b"}}])
+
+    def test_multistep_join_pivot(self):
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"record_a"},{"id":2,"name":"record_b"},{"id":3,"name":"record_c"},{"id":4,"name":"record_b"}]])
+        q2 = MockDataSource([[{"name_id":2,"count":10,"data":"record_a"},{"name_id":6,"count":11,"data":"record_c"},{"name_id":5,"count":12,"data":"record_b"}]])
+        q3 = MockDataSource([[{"id":2,"record":"record_c"},{"id":21,"record":"record_a"},{"id":2,"record":"record_b"},{"id":31,"record":"record_b"},]])
+        s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="step1", exclude_empty_joins=True).pivot_to(q3, F("step1.id") == F("id"))
+        s.result_handler(r)
+        s.execute(scroll=False)
+
+        self.assertEqual(r.results, [{"id":2,"record":"record_c"},{"id":2,"record":"record_b"}])
 
