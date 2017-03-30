@@ -1,3 +1,7 @@
+"""@package query
+Classes for querying, indexing and filtering Python objects based on a query compiled from data sources associated by field relationships.
+"""
+
 from __future__ import print_function
 from elasticsearch import Elasticsearch
 from elasticsearch import ElasticsearchException
@@ -11,21 +15,33 @@ from relations import F
 import relations
 
 class ResultShim(object):
+    """Step result.
+    """
     def __init__(self, data):
+        """Constructor. data is the data source object.
+        """
         self._data = data
 
     def success(self):
+        """Is the result data available?
+        """
         return True
 
     def __iter__(self):
+        """Get a data iterator.
+        """
         return self._data
 
 class ScrollShim(ResultShim):
+    """Specialisation of ResultShim for use when using the Elastic scroll API so that debug output can be emitted.
+    """
     def __init__(self, logger, data):
         super(ScrollShim, self).__init__(data)
-        logger.debug("Elasticsearch scroll session created: {0}".format(str(data)))
+        logger.debug("Scroll session created: {0}".format(str(data)))
 
 class StdoutResultHandler(object):
+    """Query result handler that simply writes the stringified results to stdout.
+    """
     def __call__(self, result, handler_output):
         print(str(result))
 
@@ -33,43 +49,67 @@ class StdoutResultHandler(object):
         return True
 
 class CountingMatchCallbackProxy(object):
+    """Proxies a match callback object, tracking counts to the callback.
+    """
     def __init__(self, target_callback):
+        """Constructor.
+        """
         self.count = 0
         self._target_callback = target_callback
 
     def __call__(self, instr, subject, match):
+        """Callback entry point.
+        """
         self.count += 1
         self._target_callback(instr, subject, match)
 
 # ref: http://stackoverflow.com/questions/25833613/python-safe-method-to-get-value-of-nested-dictionary
 class NestedField(object):
+    """An adapter allowing access to a member of any Python object, regardless of how deeply nested in another Python object it may be. The "level zero" object point at which to start when trying to resolve the target member is specified by obj, while a string of the form "level_0_obj.level_1_obj.target_member" is specified by field to denote the target member to be represented by the NestedField object.
+    """
     def __init__(self, obj, field):
         self.obj = obj
         self.field = field
         self._value = None
 
     def exists(self):
+        """Does the target member specified exist?
+
+        If found, the target member value is cached for use by the value() method. After being cached, subsequent calls to exist() and value() will return the same results as they did on the first call regardless of whether or not the target object has changed. To override this behaviour, call clear_cache().
+        """
         def get_level(obj, field):
             return obj[field]
 
-        try:
-            self._value = reduce(get_level, self.field.split("."), self.obj)
-        except KeyError, TypeError:
-            return False
+        if (self._value is None):
+
+            try:
+                self._value = reduce(get_level, self.field.split("."), self.obj)
+            except KeyError, TypeError:
+                return False
 
         return True
 
     def value(self):
-        if (self._value is None):
-            if (self.exists()):
-                return self._value
-            else:
-                return None
-        else:
+        """What is the value of the target member specified? Returns None if the target member doesn't exist.
+
+        Implicitly calls exist, so the same caching behaviour applies.
+        """
+        if (self.exists()):
             return self._value
+        else:
+            return None
+
+    def clear_cache(self):
+        """Clears cached target member value.
+        """
+        self._value = None
 
 class IndexResultHandler(object):
+    """Indexes results from one query step according to specified index requirements (e.g. the filter requirements of a subsequent query step).
+    """
     def __init__(self, index_conditions, logger):
+        """Constructor. Index conditions specify the fields to index and the logic that relates them.
+        """
         self.index_conditions = index_conditions
         self._hit_group_count = 0
         self._logger = logger
@@ -77,6 +117,8 @@ class IndexResultHandler(object):
         self._logger.debug("{0} index condition group(s)".format(len(self.index_conditions)))
 
     def __call__(self, result, handler_output):
+        """Performs the indexing. Each condition group within the index conditions specifies the name of fields that must be indexed together as AND'ed sub-expressions.
+        """
         if (len(handler_output) == 0):
             for cond_group_index in xrange(len(self.index_conditions)):
                 handler_output.append({F.OP_EQ : {}, F.OP_NE : {}})
@@ -123,19 +165,26 @@ class IndexResultHandler(object):
             cond_group_index += 1
 
     def success(self):
+        """Success is defined as at least one object satisfying the field requirements of the index conditions.
+        """
         self._logger.debug("{0} possibly-related field value(s)".format(self._hit_group_count))
         return (self._hit_group_count > 0)
 
 class JiggleQ(object):
+    """A JiggleQ query.
+    """
+
     OP_SEED = 0
     OP_PIVOT = 1
     OP_JOIN = 2
 
     def __init__(self, search):
+        """Constructor. Sets up an instruction set to associate callbacks with query actions.
+        """
         self._instruction_set = {
             JiggleQ.OP_SEED : {"name" : "seed", "after" : None, "match_callback" : None},
-            JiggleQ.OP_PIVOT : {"name" : "pivot", "after" : self._pivot_after, "match_callback" : None},
-            JiggleQ.OP_JOIN : {"name" : "join", "after" : None, "match_callback" : self._join_match_callback}
+            JiggleQ.OP_PIVOT : {"name" : "pivot", "after" : self._stage_after, "match_callback" : None},
+            JiggleQ.OP_JOIN : {"name" : "join", "after" : self._stage_after, "match_callback" : self._join_match_callback}
         }
 
         # Create a logging object
@@ -155,26 +204,44 @@ class JiggleQ(object):
         return self._logger
 
     def join_to(self, search, rel, field=None, array=False, exclude_empty_joins=False):
+        """Adds a new step to the query that joins the results of the previous step with the results of search when the field relationships specified hold.
+
+        The name of the object member under which the joined results will reside can be specified using field. A default name of "joined_data" will be used otherwise.
+
+        array can be set to True to ensure the field containing joined results is a list, allowing multiple objects to be joined to the same parent object.
+
+        exclude_empty_joins can be set to True to discard objects produced by search that don't end up having anything joined to them.
+        """
         target_conds = relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
         self._instructions.append({"op":JiggleQ.OP_JOIN, "exclude_empty_matches":exclude_empty_joins, "field":field, "array":array, "conditions":target_conds, "q":search, "conjunctions":[]})
         return self
 
     def pivot_to(self, search, rel):
+        """Adds a new step to the query that selects only the results of search whose fields are related to the previous step's results according to the relationships specified.
+        """
         target_conds = relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
         self._instructions.append({"op":JiggleQ.OP_PIVOT, "conditions":target_conds, "q":search, "conjunctions":[]})
         return self
 
     def _filter_and_store(self, instr, response, filter_conditions, result_handler):
+        """Uses the previous query step's index to filter results and discard those that don't satisfy the filter conditions.
+
+        Index keys for each right-hand result are created on-the-fly for lookup in the previous step's index.
+
+        O(n) worst-case time complexity for conditions that contain only equality relationships, where n = the number of results. O(n*n) worst-case time complexity for conditions that contain inequality conditions, where n = the number of results.
+
+        The behaviour of this method depends heavily on whether or not the filter matches (i.e. left-hand results that satisfy filter conditions) need to be sent to a match callback. If they don't, substantial shortcuts are taken (e.g. to avoid iterating over all inequality matches). Pivoting does not require filter matches to be sent to a match callback, joining does.
+
+        Once a right-hand result is known to match the filter conditions, it is passed to result_handler. This will either index the result ahead of the next query step, or if there are no further query steps, will pass the result to the client-supplied result handler.
+        """
         self._logger.debug("{0} filter condition group(s)".format(len(filter_conditions)))
 
         self._results.append([])
 
         for h in response:
             result = h.to_dict()
-
-            self._logger.debug("Hit: {0}".format(str(result)))
 
             # Filter
 
@@ -305,6 +372,8 @@ class JiggleQ(object):
                 result_handler(result, self._results[-1])
 
     def _process_response(self, instr, response, index_conditions, filter_conditions):
+        """Applies appropriate logic to a data source response based on the query step and success of the data source request.
+        """
         if (response.success()):
             if (hasattr(response, "took")):
                 self._logger.info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
@@ -326,11 +395,18 @@ class JiggleQ(object):
             self._logger.error("Query failed, aborting...")
             return None
 
-    def _pivot_after(self, instr):
-        # Previous stage's results aren't required anymore
+    def _stage_after(self, instr):
+        """Delete's the previous query step's results. Important for multi-step queries that yield large result sets.
+        """
         del self._results[0]
 
     def _join_match_callback(self, instr, subject, match):
+        """The callback invoked when a right-hand result is determined to be eligible for joining to a left-hand result.
+
+           subject is the right-hand result, match is the left-hand result.
+
+           If the join step has been specified to support multiple results, the joined data will be a list of n joined objects. Otherwise, the joined data will be the first single right-hand object found to be eligible for the join.
+        """
         field_name = instr["field"]
         if (field_name is None):
             field_name = "joined_data"
@@ -351,6 +427,8 @@ class JiggleQ(object):
                 subject[field_name] = match
 
     def _execute_instruction(self, instr):
+        """Request data from the data source associated with the instruction and process the response.
+        """
         response = None
 
         try:
@@ -368,11 +446,15 @@ class JiggleQ(object):
             return True
 
     def execute(self, scroll=False):
+        """Execute the query. Runs each query step from left to right.
+
+           If scroll is True, the data source's Elasticsearch-style scroll API will be used to retrieve results.
+        """
         try:
             self.result = {}
             stage_index = 0
             for instr in self._instructions:
-                self._logger.debug("<Stage {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
+                self._logger.debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
                 instr["scroll"] = scroll
                 if (not self._execute_instruction(instr)):
                     return False
