@@ -69,8 +69,6 @@ class MockDataSource(object):
 
     def __init__(self, obj_array, success=True):
         """Constructor.
-
-        \param obj_array An array of Python objects to be serialised to pass to JiggleQ in the order provided
         """
         self._simulated_success = success
         self.data = obj_array
