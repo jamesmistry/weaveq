@@ -1,2 +1,4 @@
 *.py[c|o]
 *.swp
+docs/code
+docs/build/*
