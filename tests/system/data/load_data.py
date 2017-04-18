@@ -28,7 +28,7 @@ def elastic_post(records, hostname = "127.0.0.1", port = 9200):
             idx = Index(indexName)
             if (indexName not in observed_indices):
                 if (idx.exists()):
-                    print("Deleting existing index {0}".format(indexName))
+                    print("Existing index deleted: {0}".format(indexName))
                     idx.delete()
                 observed_indices[indexName] = None
 
