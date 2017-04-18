@@ -17,7 +17,7 @@ import relations
 
 class DataSource(object):
     """!
-    Abstract data source.
+    Abstract data source. Conveniently mirrors the Elasticsearch DSL data acquisition interface.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -175,7 +175,7 @@ class NestedField(object):
         """!
         Does the target member specified exist?
 
-        If found, the target member value is cached for use by the @c value() method. After being cached, subsequent calls to @c exist() and @c value() will return the same results as they did on the first call regardless of whether or not the target object has changed. To override this behaviour, call @c clear_cache().
+        If found, the target member value is cached for use by the @c value() method. After being cached, subsequent calls to @c exists() and @c value() will return the same results as they did on the first call regardless of whether or not the target object has changed. To override this behaviour, call @c clear_cache().
 
         @return @c True if the target member exists, @c False if it doesn't
         """
@@ -193,7 +193,7 @@ class NestedField(object):
 
     def value(self):
         """!
-        What is the value of the target member specified? Returns None if the target member doesn't exist.
+        What is the value of the target member specified? Returns @c None if the target member doesn't exist.
 
         Implicitly calls @c exists(), so the same caching behaviour applies.
 
@@ -212,7 +212,7 @@ class NestedField(object):
 
 class IndexResultHandler(object):
     """!
-    Indexes results from one query step according to specified index requirements (e.g. the filter requirements of a subsequent query step).
+    Indexes results from one query step according to specified index requirements (such as the filter requirements of a subsequent query step).
     """
     def __init__(self, index_conditions, logger):
         """!
@@ -374,7 +374,7 @@ class JiggleQ(object):
 
         O(n) worst-case time complexity for conditions that contain only equality relationships, where n = the number of results. O(n*n) worst-case time complexity for conditions that contain inequality conditions, where n = the number of results.
 
-        The behaviour of this method depends heavily on whether or not the filter matches (i.e. results that satisfy filter conditions) need to be sent to a match callback. If they don't, substantial shortcuts are taken (e.g. to avoid iterating over all inequality matches). Pivoting does not require filter matches to be sent to a match callback, joining does.
+        The behaviour of this method depends heavily on whether or not the filter matches (i.e. results that satisfy filter conditions) need to be sent to a match callback. If they don't, substantial shortcuts are taken (such as to avoid iterating over all inequality matches). Pivoting does not require filter matches to be sent to a match callback, joining does.
 
         Once a right-hand result is known to match the filter conditions, it is passed to @c result_handler. This will either index the result ahead of the next query step, or if there are no further query steps, will pass the result to the client-supplied result handler.
 
