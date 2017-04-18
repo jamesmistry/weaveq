@@ -133,7 +133,8 @@ class F(object):
 
 class ConditionNode(object):
     """!
-    A node in a condition tree
+    A node in a condition tree.
+
     A tree node containing an LHS field name/proxy, operator and RHS field name/proxy. Used at query-time to evaluate result sets and at build-time to walk a condition tree.
     """
     def __init__(self, parent, left_field = None, op = None, right_field = None, lhs_proxy = None, rhs_proxy = None, label = "?"):
