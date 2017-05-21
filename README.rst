@@ -6,4 +6,9 @@ JiggleQ: A tool that pivots and joins across collections of Python objects, with
 Introduction
 ------------
 
-JiggleQ ...
+JiggleQ ..
+
+Building
+--------
+
+
