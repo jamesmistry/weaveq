@@ -8,9 +8,12 @@ import jqexception
 
 class FieldMustBeRelated(jqexception.JiggleQError):
     """!
-    Thrown when only a field object is provided when an expression of the form <field> <operator> <field> is expected
+    Thrown when only a field object is provided when an expression of the form [field] [operator] [field] is expected
     """
     def __init__(self):
+        """!
+        Constructor.
+        """
         super(FieldMustBeRelated, self).__init__("Each left-hand field specified must be related to a right-hand field by a comparison operator. For example, F(leftField) == F(rightField) instead of F(leftField)")
 
 class FieldRelationshipNotInParentheses(jqexception.JiggleQError):
@@ -22,6 +25,9 @@ class FieldRelationshipNotInParentheses(jqexception.JiggleQError):
     @param rightField F: Right-hand field in the expression that caused the exception
     """
     def __init__(self, leftField, op, rightField):
+        """!
+        Constructor.
+        """
         super(FieldRelationshipNotInParentheses, self).__init__("You didn't put a field relationship mapping in parentheses: write (F({0}) {1} F({2})) instead of F({0}) {1} F({2})".format(leftField, op, rightField))
 
 class DefaultFieldProxy(object):
@@ -34,6 +40,16 @@ class DefaultFieldProxy(object):
     @return The original field value
     """
     def __call__(self, name, value):
+        """!
+        Entry point for the proxy. Called when the query engine needs to find out the correct representation of a value in a query step result.
+
+        This class represents the default behaviour, which is simply to return the original value unmodified to the caller.
+
+        @param name string: The name of the field from which the value to proxy has come
+        @param value: The value to be proxied
+
+        @return The proxied representation of the supplied value
+        """
         return value
 
 class F(object):
@@ -43,11 +59,21 @@ class F(object):
     Overrides a set of operators that can be used to express the desired relationship between two F objects and a set of operators that can be used to AND or OR two or more F object relationships together. Internally, it represents these relationships as a tree, each branch of which contains a set of nodes representing field relationships AND'ed together.
     """
 
+    ## Constant defining an equality relationship between fields
     OP_EQ = 0
+
+    ## Constant defining an inequality relationship between fields
     OP_NE = 1
 
     @staticmethod
     def op_str(opcode):
+        """!
+        Converts a comparison opcode to a string.
+
+        @param opcode int: The opcode to be represented as a string
+
+        @return the string representation of the supplied opcode
+        """
         if (opcode == F.OP_EQ):
             return "=="
         elif (opcode == F.OP_NE):
@@ -62,13 +88,31 @@ class F(object):
         @param name String: name of the field
         @param proxy object: object to use as the field value proxy. It must expose a method with the following signature: \_\_call\_\_(self, name, value)
         """
+
+        ## @var name
+        # Field's name
         self.name = name
+
+        ## @var tree
+        # Tree object for representing the relationship with other nodes
         self.tree = None
+
+        ## @var proxy
+        # Proxy field object for use with this field
+        self.proxy = None
 
         if (proxy is None):
             self.proxy = DefaultFieldProxy()
         else:
             self.proxy = proxy
+
+        ## @var op
+        # Opcode representing a comparison operation (set using a comparison operator)
+        self.op = None
+
+        ## @var rhs
+        # Right-hand side field to relate to this field (set using a comparison operator)
+        self.rhs = None
 
     def __eq__(self, rhs):
         """!
@@ -151,19 +195,48 @@ class ConditionNode(object):
 
         @see F
         """
+
+        ## @var parent
+        # ConditionNode that is the parent of this node in the tree
         self.parent = None
+
+        ## @var left_field
+        # Field object that represents the left-hand side of the condition
         self.left_field = left_field
+
+        ## @var op
+        # Comparison operator code
         self.op = op
+
+        ## @var right_field
+        # Field object that represents the right-hand side of the condition
         self.right_field = right_field
+
+        ## @var _edges
+        # Outgoing edges from this node as an array of other ConditionNode objects
         self._edges = []
+
+        ## @var label
+        # Node's string label for help in debugging
         self.label = label
+
+        ## @var lhs_proxy
+        # Proxy object for use with left-hand side field values
         self.lhs_proxy = lhs_proxy
+
+        ## @var rhs_proxy
+        # Proxy object for use with right-hand side field values
         self.rhs_proxy = rhs_proxy
 
         if (parent is not None):
             parent.add_child(self)
 
     def __repr__(self):
+        """!
+        Produce a string representation of the field relationship in the form [lhs] [operator] [rhs].
+
+        @return The string representation
+        """
         if ((self.op is None) and (self.left_field is None) and (self.right_field is None)):
             return "*"
         else:
@@ -254,8 +327,9 @@ class ConditionNode(object):
 
 class TargetConditions(object):
     """!
-    Simplifies a condition tree into a useful helper for evaluating result sets against condition logic
-    Maintains a list of a list of ANDed conditions ("conjunctions") and the right-hand-side field names on which they, as a whole, depend. This allows evaluation to be short-circuited if a field that is listed as a dependency doesn't exist.
+    Simplifies a condition tree into a useful helper for evaluating result sets against condition logic.
+    
+    Maintains a list of ANDed conditions ("conjunctions") and the right-hand-side field names on which they, as a whole, depend. This allows evaluation to be short-circuited if a field that is listed as a dependency doesn't exist.
     """
     def __init__(self, tree):
         """!
@@ -263,8 +337,17 @@ class TargetConditions(object):
 
         @param tree ConditionNode: The tree from which the helper object should be created
         """
+
+        ## @var tree
+        # The source tree from which the object is created
         self.tree = tree
+
+        ## @var conjunctions
+        # ANDed conditions grouped together as lists
         self.conjunctions = []
+
+        ## @var rhs_dependencies
+        # List of right-hand side field names that must exist in order for the conditions to be satisfied
         self.rhs_dependencies = []
 
         field_counts = {}

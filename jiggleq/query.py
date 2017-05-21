@@ -99,6 +99,12 @@ class ScrollShim(ResultShim):
     Specialisation of ResultShim for use when using the scan API so that debug output can be emitted.
     """
     def __init__(self, logger, data):
+        """!
+        Constructor.
+
+        @param logger object: Logger object
+        @param data object: Data that is to be used by the query step.
+        """
         super(ScrollShim, self).__init__(data)
         logger.debug("Scan session created: {0}".format(str(data)))
 
@@ -116,6 +122,9 @@ class StdoutResultHandler(ResultHandler):
         print(str(result))
 
     def success(self):
+        """!
+        Always returns @c True
+        """
         return True
 
 class MatchCallbackProxy(object):
@@ -145,7 +154,11 @@ class CountingMatchCallbackProxy(MatchCallbackProxy):
 
         @param target_callback object: The match callback being proxied.
         """
+
+        ## The number of times the callback has been called since the instance's creation
         self.count = 0
+
+        ## The callback to forward calls to
         self._target_callback = target_callback
 
     def __call__(self, instr, subject, match):
@@ -155,10 +168,11 @@ class CountingMatchCallbackProxy(MatchCallbackProxy):
         self.count += 1
         self._target_callback(instr, subject, match)
 
-# ref: http://stackoverflow.com/questions/25833613/python-safe-method-to-get-value-of-nested-dictionary
 class NestedField(object):
     """!
     An adapter allowing access to a member of any Python object, regardless of how deeply nested in another Python object it may be.
+
+    Ref: http://stackoverflow.com/questions/25833613/python-safe-method-to-get-value-of-nested-dictionary
     """
     def __init__(self, obj, field):
         """!
@@ -167,7 +181,11 @@ class NestedField(object):
         @param obj object: The "level zero" object point at which to start when trying to resolve the target member.
         @param field string: A string of the form "level_0_obj.level_1_obj.target_member" to denote the target member to be represented by the NestedField object.
         """
+
+        ## Top level object from which the nested field is accessible
         self.obj = obj
+
+        ## Name of the nested field in "dot" notation
         self.field = field
         self._value = None
 
@@ -219,12 +237,19 @@ class IndexResultHandler(object):
         Constructor.
         
         @param index_conditions object: The fields to index and the logic that relates them.
+        @param logger object: The log object to use for logging.
         """
-        self.index_conditions = index_conditions
-        self._hit_group_count = 0
-        self._logger = logger
 
-        self._logger.debug("{0} index condition group(s)".format(len(self.index_conditions)))
+        ## Fields to index and the related logic
+        self.index_conditions = index_conditions
+
+        ## The number of AND'ed field conditions that are satisfied 
+        self._hit_group_count = 0
+
+        ## Logger object
+        self.logger = logger
+
+        self.logger.debug("{0} index condition group(s)".format(len(self.index_conditions)))
 
     def __call__(self, result, handler_output):
         """!
@@ -277,14 +302,14 @@ class IndexResultHandler(object):
 
         @return @c True if the field requirements are satisfied for one or more objects, @c False otherwise
         """
-        self._logger.debug("{0} possibly-related field value(s)".format(self._hit_group_count))
+        self.logger.debug("{0} possibly-related field value(s)".format(self._hit_group_count))
         return (self._hit_group_count > 0)
 
 class JiggleQ(object):
     """!
     @brief A JiggleQ query.
 
-    A query is made up of one or more steps. The first step is always a "seed" step, consisting only of a data source. A data source is simply an object exposing a particular interface that JiggleQ can use in order to receive data in the form of Python objects.
+    A query is made up of one or more steps. The first step is always a "seed" step, consisting only of a data source. A data source is simply an object exposing a particular interface that JiggleQ can use to receive data in the form of Python objects.
     
     Subsequent steps will be either "join" or "pivot" steps, and are associated with both a data source and one or more relationship conditions. A relationship condition is a mapping between two fields: one in the results from the previous step's data source (the "right-hand side") and one in the results from the current step's data source (the "left-hand side"). Currently, fields can only be related by equality or inequality.
 
@@ -296,8 +321,13 @@ class JiggleQ(object):
     @see DataSource
     """
 
+    ## Constant defining a seed query step
     OP_SEED = 0
+
+    ## Constant defining a pivot query step
     OP_PIVOT = 1
+
+    ## Constant defining a join query step
     OP_JOIN = 2
 
     def __init__(self, search):
@@ -312,14 +342,18 @@ class JiggleQ(object):
             JiggleQ.OP_JOIN : {"name" : "join", "after" : self._stage_after, "match_callback" : self._join_match_callback}
         }
 
-        # Create a logging object
-        self._logger = jqlog.JqLogger.get()
+        ## @var logger
+        # The logging object to use
+        self.logger = jqlog.JqLogger.get()
 
         self._results = []
 
         self._instructions = []
         self._instructions.append({"op":JiggleQ.OP_SEED, "conditions":None, "q":search, "conjunctions":None})
         self._result_handler = StdoutResultHandler()
+
+        ## @var result
+        # Records resulting from the final query step
         self.result = None
 
     def result_handler(self, handler):
@@ -333,7 +367,12 @@ class JiggleQ(object):
         self._result_handler = handler
 
     def logger(self):
-        return self._logger
+        """!
+        Get the logger instance in use.
+
+        @return Instance of a Logger class
+        """
+        return self.logger
 
     def join_to(self, data_source, rel, field=None, array=False, exclude_empty_joins=False):
         """!
@@ -435,7 +474,7 @@ class JiggleQ(object):
                             except KeyError:
                                 pass
 
-                        self._logger.debug("Found {0} inequality match(es)".format(len(ne_matches)))
+                        self.logger.debug("Found {0} inequality match(es)".format(len(ne_matches)))
 
                         # If the left-hand results are not required, right-hand results can be easily excluded based on the filter key match counts
                         if (match_callback is None):
@@ -453,7 +492,6 @@ class JiggleQ(object):
 
                             def index_ne(ne, indexed):
                                 for ne_match in ne:
-                                    self._logger.debug("Added NE result to index: {0} as {1}".format(ne_match, id(ne_match)))
                                     indexed[id(ne_match)] = None
 
                             if ((len(filter_keys_eq) > 0) and (len(filter_keys_ne) > 0)):
@@ -484,7 +522,6 @@ class JiggleQ(object):
 
                             elif ((len(filter_keys_eq) > 0) and (len(filter_keys_ne) == 0)):
                                 # If there are only equality conditions, the desired matches are simply all the equality matches
-                                # Iteration over all matches is only required if there's a match callback
                                 for eq_match in eq_matches:
                                     match_callback(instr, result, eq_match)
 
@@ -512,11 +549,11 @@ class JiggleQ(object):
         """
         if (response.success()):
             if (hasattr(response, "took")):
-                self._logger.info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
+                self.logger.info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
 
             handler = None
             if (len(index_conditions) > 0):
-                handler = IndexResultHandler(index_conditions, self._logger)
+                handler = IndexResultHandler(index_conditions, self.logger)
             else:
                 handler = self._result_handler
                     
@@ -528,7 +565,7 @@ class JiggleQ(object):
                 return None
 
         else:
-            self._logger.error("Query failed, aborting...")
+            self.logger.error("Query failed, aborting...")
             return None
 
     def _stage_after(self, instr):
@@ -561,10 +598,10 @@ class JiggleQ(object):
             if (type(subject[field_name]) is list):
                 subject[field_name].append(match)
             else:
-                self._logger.warn("Couldn't join record to {0} because a non-array field called {1} already exists".format(str(subject), field_name))
+                self.logger.warn("Couldn't join record to {0} because a non-array field called {1} already exists".format(str(subject), field_name))
         else:
             if (field_name in subject):
-                self._logger.warn("Couldn't join record to {0} because a field called {1} already exists".format(str(subject), field_name))
+                self.logger.warn("Couldn't join record to {0} because a field called {1} already exists".format(str(subject), field_name))
             else:
                 subject[field_name] = match
 
@@ -579,12 +616,12 @@ class JiggleQ(object):
         response = None
 
         try:
-            response = self._process_response(instr, ScrollShim(self._logger, instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
+            response = self._process_response(instr, ScrollShim(self.logger, instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
         except ElasticsearchException as e:
-            self._logger.error("Elasticsearch error: {0}".format(str(e)))
+            self.logger.error("Elasticsearch error: {0}".format(str(e)))
             response = None
         except Exception as e:
-            self._logger.error("Error: {0}".format(str(e)))
+            self.logger.error("Error: {0}".format(str(e)))
             response = None
 
         if (response is None):
@@ -604,7 +641,7 @@ class JiggleQ(object):
             self.result = {}
             stage_index = 0
             for instr in self._instructions:
-                self._logger.debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
+                self.logger.debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
                 instr["scroll"] = scroll
                 if (not self._execute_instruction(instr)):
                     return False
@@ -615,20 +652,11 @@ class JiggleQ(object):
 
                 stage_index += 1
         except Exception as e:
-            self._logger.error("Query failed: {0}".format(e))
+            self.logger.error("Query failed: {0}".format(e))
             return False
 
         return True
 
 if __name__ == "__main__":
-    c = Elasticsearch(hosts=["127.0.0.1:9200"])
-    q1 = Search(using=c, index="requests").query("match", method="CONNECT")
-    q2 = Search(using=c, index="clients").query("match_all")
-    q3 = Search(using=c, index="customers").query("match_all")
-    q4 = Search(using=c, index="requests").query("match_all")
-    s = JiggleQ(q1).pivot_to(q2, F("src_ip") == F("ip")).join_to(q3, (F("country") != F("personal.location.country")) & (F("customer_id") != F("id")), array=True)
-    #s = JiggleQ(q1).pivot_to(q2, F("src_ip") == F("ip")).join_to(q3, (F("customer_id") != F("id")), array=True)
-    #s = JiggleQ(q1).pivot_to(q2, F("src_ip") == F("ip")).join_to(q3, (F("country") == F("personal.location.country")), array=True)
-    s.logger().setLevel(logging.DEBUG)
-    s.execute(scroll=True)
+    sys.exit(0)
 
