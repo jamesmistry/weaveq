@@ -148,15 +148,11 @@ class TestIndexResultHandler(unittest.TestCase):
         """Tests IndexResultHandler
         """
 
-        def setUp(self):
-            self._logger = jiggleq.jqlog.JqLogger.get()
-            self._logger.setLevel(logging.ERROR)
-
         def test_no_index_conds(self):
             """No index conditions provided
             """
 
-            subject = IndexResultHandler([], self._logger)
+            subject = IndexResultHandler([])
 
             result = []
             subject({"test_field" : "test_value"}, result)
@@ -172,7 +168,7 @@ class TestIndexResultHandler(unittest.TestCase):
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
             cond2 = ConditionNode(None, "test_lhs_field2", F.OP_NE, "test_rhs_field2", TransparentFieldProxy(), TransparentFieldProxy())
 
-            subject = IndexResultHandler([[cond1, cond2]], self._logger)
+            subject = IndexResultHandler([[cond1, cond2]])
 
             result = []
             subject({cond1.left_field : "test_value"}, result)
@@ -190,7 +186,7 @@ class TestIndexResultHandler(unittest.TestCase):
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
             cond2 = ConditionNode(None, "test_lhs_field2", F.OP_NE, "test_rhs_field2", TransparentFieldProxy(), TransparentFieldProxy())
 
-            subject = IndexResultHandler([[cond1], [cond2]], self._logger)
+            subject = IndexResultHandler([[cond1], [cond2]])
 
             result = []
             subject({cond1.left_field : "test_value"}, result)
@@ -207,7 +203,7 @@ class TestIndexResultHandler(unittest.TestCase):
     
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
     
-            subject = IndexResultHandler([[cond1]], self._logger)
+            subject = IndexResultHandler([[cond1]])
         
             result = []
             data = {cond1.left_field : "test_value"}
@@ -228,7 +224,7 @@ class TestIndexResultHandler(unittest.TestCase):
     
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
     
-            subject = IndexResultHandler([[cond1]], self._logger)
+            subject = IndexResultHandler([[cond1]])
    
             result = []
             data1 = {cond1.left_field : "test_value", "name" : "data1"}
@@ -252,7 +248,7 @@ class TestIndexResultHandler(unittest.TestCase):
 
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_NE, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
 
-            subject = IndexResultHandler([[cond1]], self._logger)
+            subject = IndexResultHandler([[cond1]])
 
             result = []
             data = {cond1.left_field : "test_value"}
@@ -273,7 +269,7 @@ class TestIndexResultHandler(unittest.TestCase):
     
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_NE, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
     
-            subject = IndexResultHandler([[cond1]], self._logger)
+            subject = IndexResultHandler([[cond1]])
     
             result = []
             data1 = {cond1.left_field : "test_value", "name" : "data1"}
@@ -298,7 +294,7 @@ class TestIndexResultHandler(unittest.TestCase):
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
             cond2 = ConditionNode(None, "test_lhs_field2", F.OP_NE, "test_rhs_field2", TransparentFieldProxy(), TransparentFieldProxy())
 
-            subject = IndexResultHandler([[cond1, cond2]], self._logger)
+            subject = IndexResultHandler([[cond1, cond2]])
    
             result = []
             data1 = {cond1.left_field : "test_value1", cond2.left_field : "test_value2", "name" : "data1"}
@@ -329,7 +325,7 @@ class TestIndexResultHandler(unittest.TestCase):
             cond1 = ConditionNode(None, "test_lhs_field1", F.OP_EQ, "test_rhs_field1", TransparentFieldProxy(), TransparentFieldProxy())
             cond2 = ConditionNode(None, "test_lhs_field2", F.OP_NE, "test_rhs_field2", TransparentFieldProxy(), TransparentFieldProxy())
 
-            subject = IndexResultHandler([[cond1], [cond2]], self._logger)
+            subject = IndexResultHandler([[cond1], [cond2]])
     
             result = []
             data1 = {cond1.left_field : "test_value1", cond2.left_field : "test_value2", "name" : "data1"}

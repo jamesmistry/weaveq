@@ -98,15 +98,14 @@ class ScrollShim(ResultShim):
     """!
     Specialisation of ResultShim for use when using the scan API so that debug output can be emitted.
     """
-    def __init__(self, logger, data):
+    def __init__(self, data):
         """!
         Constructor.
 
-        @param logger object: Logger object
         @param data object: Data that is to be used by the query step.
         """
         super(ScrollShim, self).__init__(data)
-        logger.debug("Scan session created: {0}".format(str(data)))
+        jqlog.get(self).debug("Scan session created: {0}".format(str(data)))
 
 class StdoutResultHandler(ResultHandler):
     """!
@@ -232,12 +231,11 @@ class IndexResultHandler(object):
     """!
     Indexes results from one query step according to specified index requirements (such as the filter requirements of a subsequent query step).
     """
-    def __init__(self, index_conditions, logger):
+    def __init__(self, index_conditions):
         """!
         Constructor.
         
         @param index_conditions object: The fields to index and the logic that relates them.
-        @param logger object: The log object to use for logging.
         """
 
         ## Fields to index and the related logic
@@ -247,9 +245,7 @@ class IndexResultHandler(object):
         self._hit_group_count = 0
 
         ## Logger object
-        self.logger = logger
-
-        self.logger.debug("{0} index condition group(s)".format(len(self.index_conditions)))
+        jqlog.get(self).debug("{0} index condition group(s)".format(len(self.index_conditions)))
 
     def __call__(self, result, handler_output):
         """!
@@ -302,7 +298,7 @@ class IndexResultHandler(object):
 
         @return @c True if the field requirements are satisfied for one or more objects, @c False otherwise
         """
-        self.logger.debug("{0} possibly-related field value(s)".format(self._hit_group_count))
+        jqlog.get(self).debug("{0} possibly-related field value(s)".format(self._hit_group_count))
         return (self._hit_group_count > 0)
 
 class JiggleQ(object):
@@ -342,10 +338,6 @@ class JiggleQ(object):
             JiggleQ.OP_JOIN : {"name" : "join", "after" : self._stage_after, "match_callback" : self._join_match_callback}
         }
 
-        ## @var logger
-        # The logging object to use
-        self.logger = jqlog.JqLogger.get()
-
         self._results = []
 
         self._instructions = []
@@ -366,13 +358,6 @@ class JiggleQ(object):
         """
         self._result_handler = handler
 
-    def logger(self):
-        """!
-        Get the logger instance in use.
-
-        @return Instance of a Logger class
-        """
-        return self.logger
 
     def join_to(self, data_source, rel, field=None, array=False, exclude_empty_joins=False):
         """!
@@ -474,7 +459,7 @@ class JiggleQ(object):
                             except KeyError:
                                 pass
 
-                        self.logger.debug("Found {0} inequality match(es)".format(len(ne_matches)))
+                        jqlog.get(self).debug("Found {0} inequality match(es)".format(len(ne_matches)))
 
                         # If the left-hand results are not required, right-hand results can be easily excluded based on the filter key match counts
                         if (match_callback is None):
@@ -549,11 +534,11 @@ class JiggleQ(object):
         """
         if (response.success()):
             if (hasattr(response, "took")):
-                self.logger.info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
+                jqlog.get(self).info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
 
             handler = None
             if (len(index_conditions) > 0):
-                handler = IndexResultHandler(index_conditions, self.logger)
+                handler = IndexResultHandler(index_conditions)
             else:
                 handler = self._result_handler
                     
@@ -565,7 +550,7 @@ class JiggleQ(object):
                 return None
 
         else:
-            self.logger.error("Query failed, aborting...")
+            jqlog.get(self).error("Query failed, aborting...")
             return None
 
     def _stage_after(self, instr):
@@ -598,10 +583,10 @@ class JiggleQ(object):
             if (type(subject[field_name]) is list):
                 subject[field_name].append(match)
             else:
-                self.logger.warn("Couldn't join record to {0} because a non-array field called {1} already exists".format(str(subject), field_name))
+                jqlog.get(self).warn("Couldn't join record to {0} because a non-array field called {1} already exists".format(str(subject), field_name))
         else:
             if (field_name in subject):
-                self.logger.warn("Couldn't join record to {0} because a field called {1} already exists".format(str(subject), field_name))
+                jqlog.get(self).warn("Couldn't join record to {0} because a field called {1} already exists".format(str(subject), field_name))
             else:
                 subject[field_name] = match
 
@@ -616,12 +601,12 @@ class JiggleQ(object):
         response = None
 
         try:
-            response = self._process_response(instr, ScrollShim(self.logger, instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
+            response = self._process_response(instr, ScrollShim(jqlog.get(self), instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
         except ElasticsearchException as e:
-            self.logger.error("Elasticsearch error: {0}".format(str(e)))
+            jqlog.get(self).error("Elasticsearch error: {0}".format(str(e)))
             response = None
         except Exception as e:
-            self.logger.error("Error: {0}".format(str(e)))
+            jqlog.get(self).error("Error: {0}".format(str(e)))
             response = None
 
         if (response is None):
@@ -641,7 +626,7 @@ class JiggleQ(object):
             self.result = {}
             stage_index = 0
             for instr in self._instructions:
-                self.logger.debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
+                jqlog.get(self).debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
                 instr["scroll"] = scroll
                 if (not self._execute_instruction(instr)):
                     return False
@@ -652,7 +637,7 @@ class JiggleQ(object):
 
                 stage_index += 1
         except Exception as e:
-            self.logger.error("Query failed: {0}".format(e))
+            jqlog.get(self).error("Query failed: {0}".format(e))
             return False
 
         return True
