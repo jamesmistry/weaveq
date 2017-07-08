@@ -119,6 +119,16 @@ class TestF(unittest.TestCase):
 
         self.assertEqual(str(conds.conjunctions), "[[f1 == f2], [f3 != f4]]")
 
+    def test_relationship_grouped(self):
+        expr1 = (F("f1") == F("f2"))
+        expr2 = (F("f3") == F("f4"))
+        expr3 = (F("f5") == F("f6"))
+        expr4 = (expr1 & (expr2 | expr3))
+
+        conds = TargetConditions(expr4.tree)
+
+        self.assertEqual(str(conds.conjunctions), "[[f1 == f2, f3 == f4], [f1 == f2, f5 == f6]]")
+
 class TestTargetConditions(unittest.TestCase):
     def test_conjuncts(self):
         subject = ConditionNode(None)
