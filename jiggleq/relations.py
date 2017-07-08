@@ -331,6 +331,10 @@ class TargetConditions(object):
     
     Maintains a list of ANDed conditions ("conjunctions") and the right-hand-side field names on which they, as a whole, depend. This allows evaluation to be short-circuited if a field that is listed as a dependency doesn't exist.
     """
+
+    def __str__(self):
+        return str(self.conjunctions)
+
     def __init__(self, tree):
         """!
         Constructor.
