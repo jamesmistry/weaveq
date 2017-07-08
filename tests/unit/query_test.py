@@ -67,6 +67,10 @@ class MockDataSource(object):
     """Supplies pre-defined data to JiggleQ as if it were an Elasticsearch data source
     """
 
+    def __str__(self):
+        """Data forms string representation for use in assertions"""
+        return "<data={0}>".format(id(self.data))
+
     def __init__(self, obj_array, success=True):
         """Constructor.
         """
@@ -709,4 +713,12 @@ class TestJiggleQ(unittest.TestCase):
         s.execute(scroll=False)
 
         self.assertEqual(r.results, [{"id":2,"record":"record_c"},{"id":2,"record":"record_b"}])
+
+    def test_query_as_str(self):
+        q1 = MockDataSource([[{'id':1,'name':'record_a'},{'id':2,'name':'record_b'},{'id':3,'name':'record_c'},{'id':4,'name':'record_b'}]])
+        q2 = MockDataSource([[{'name_id':2,'count':10,'data':'record_a'},{'name_id':6,'count':11,'data':'record_c'},{'name_id':5,'count':12,'data':'record_b'}]])
+        q3 = MockDataSource([[{'id':2,'record':'record_c'},{'id':21,'record':'record_a'},{'id':2,'record':'record_b'},{'id':31,'record':'record_b'}]])
+        s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="step1", exclude_empty_joins=True).pivot_to(q3, F("step1.id") == F("id"))
+
+        self.assertEqual(str(s), "<pos=0, op=SEED, q={0}>,<pos=1, op=JOIN, q={1}, rels=[[id == name_id]], exclude_empty=True, field_name=step1, array=False>,<pos=2, op=PIVOT, q={2}, rels=[[step1.id == id]]>".format(str(q1), str(q2), str(q3))) 
 
