@@ -4,7 +4,7 @@ import sys
 import application
 
 if (__name__ == "__main__"):
-    unexpected_error = False
+    exit_with_error = False
 
     try:
         entry_point = application.App()
@@ -12,6 +12,6 @@ if (__name__ == "__main__"):
     except SystemExit:
         raise
     except:
-        unexpected_error = True
+        exit_with_error = True
 
-    sys.exit(1 if unexpected_error else 0)
+    sys.exit(1 if exit_with_error else 0)
