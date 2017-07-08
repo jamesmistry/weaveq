@@ -326,6 +326,24 @@ class JiggleQ(object):
     ## Constant defining a join query step
     OP_JOIN = 2
 
+    def __str__(self):
+        return_val = ""
+        instr_index = 0
+        for instr in self._instructions:
+            if (instr_index != 0):
+                return_val += ","
+
+            if (instr["op"] == JiggleQ.OP_SEED):
+                return_val += "<pos={0}, op=SEED, q={1}>".format(str(instr_index), str(instr["q"]))
+            elif (instr["op"] == JiggleQ.OP_PIVOT):
+                return_val += "<pos={0}, op=PIVOT, q={1}, rels={2}>".format(str(instr_index), str(instr["q"]), str(instr["conditions"]))
+            elif (instr["op"] == JiggleQ.OP_JOIN):
+                return_val += "<pos={0}, op=JOIN, q={1}, rels={2}, exclude_empty={3}, field_name={4}, array={5}>".format(str(instr_index), str(instr["q"]), str(instr["conditions"]), str(instr["exclude_empty_matches"]), str(instr["field"]), str(instr["array"]))
+
+            instr_index += 1
+
+        return return_val
+
     def __init__(self, search):
         """!
         Constructor.
@@ -601,12 +619,13 @@ class JiggleQ(object):
         response = None
 
         try:
-            response = self._process_response(instr, ScrollShim(jqlog.get(self), instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
+            response = self._process_response(instr, ScrollShim(instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
         except ElasticsearchException as e:
             jqlog.get(self).error("Elasticsearch error: {0}".format(str(e)))
             response = None
         except Exception as e:
             jqlog.get(self).error("Error: {0}".format(str(e)))
+            raise
             response = None
 
         if (response is None):
@@ -638,6 +657,7 @@ class JiggleQ(object):
                 stage_index += 1
         except Exception as e:
             jqlog.get(self).error("Query failed: {0}".format(e))
+            raise
             return False
 
         return True
