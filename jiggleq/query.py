@@ -11,19 +11,21 @@ import logging
 import sys
 import abc
 
-import jqlog
 from relations import F
 import relations
 
 class DataSource(object):
     """!
-    Abstract data source. Conveniently mirrors the Elasticsearch DSL data acquisition interface.
+    Abstract data source. Delivers data to JiggleQ for indexing, joining and pivoting.
     """
 
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, uri, filter_string):
+        pass
+
     @abc.abstractmethod
-    def execute(self):
+    def batch(self):
         """!
         Called with the expectation that the data source will load all relevant data in one go.
 
@@ -32,11 +34,11 @@ class DataSource(object):
         pass
 
     @abc.abstractmethod
-    def scan(self):
+    def stream(self):
         """!
         Called with the expectation that the data source will incrementally load relevant data as the returned object is iterated over.
 
-        This method will only be called by JiggleQ if the client passes @c True as the @c scroll parameter of @c JiggleQ.execute()
+        This method will only be called by JiggleQ if the client passes @c True as the @c stream parameter of @c JiggleQ.execute()
 
         @return An iterable object that provides access to the individual result objects from the data source.
         """
@@ -105,7 +107,6 @@ class ScrollShim(ResultShim):
         @param data object: Data that is to be used by the query step.
         """
         super(ScrollShim, self).__init__(data)
-        jqlog.get(self).debug("Scan session created: {0}".format(str(data)))
 
 class StdoutResultHandler(ResultHandler):
     """!
@@ -118,7 +119,7 @@ class StdoutResultHandler(ResultHandler):
         @param result object: A result to be handled.
         @param handler_output array: Where the handler's output should be placed. Not used by this handler.
         """
-        print(str(result))
+        print(str(result), file=sys.stdout)
 
     def success(self):
         """!
@@ -244,9 +245,6 @@ class IndexResultHandler(object):
         ## The number of AND'ed field conditions that are satisfied 
         self._hit_group_count = 0
 
-        ## Logger object
-        jqlog.get(self).debug("{0} index condition group(s)".format(len(self.index_conditions)))
-
     def __call__(self, result, handler_output):
         """!
         Performs the indexing. Each condition group within the index conditions specifies the name of fields that must be indexed together as AND'ed sub-expressions.
@@ -298,7 +296,6 @@ class IndexResultHandler(object):
 
         @return @c True if the field requirements are satisfied for one or more objects, @c False otherwise
         """
-        jqlog.get(self).debug("{0} possibly-related field value(s)".format(self._hit_group_count))
         return (self._hit_group_count > 0)
 
 class JiggleQ(object):
@@ -371,8 +368,6 @@ class JiggleQ(object):
         Sets the query's result handler.
 
         @param handler object: 
-
-        @see
         """
         self._result_handler = handler
 
@@ -427,9 +422,7 @@ class JiggleQ(object):
         """
         self._results.append([])
 
-        for h in response:
-            result = h.to_dict()
-
+        for result in response:
             # Filter
 
             cond_group_index = 0
@@ -476,8 +469,6 @@ class JiggleQ(object):
                                         break
                             except KeyError:
                                 pass
-
-                        jqlog.get(self).debug("Found {0} inequality match(es)".format(len(ne_matches)))
 
                         # If the left-hand results are not required, right-hand results can be easily excluded based on the filter key match counts
                         if (match_callback is None):
@@ -551,9 +542,6 @@ class JiggleQ(object):
         @return @c response if successful or @c None otherwise 
         """
         if (response.success()):
-            if (hasattr(response, "took")):
-                jqlog.get(self).info("Query successful: took {0}ms to find {1} hit(s)".format(response.took, response.hits.total))
-
             handler = None
             if (len(index_conditions) > 0):
                 handler = IndexResultHandler(index_conditions)
@@ -568,12 +556,11 @@ class JiggleQ(object):
                 return None
 
         else:
-            jqlog.get(self).error("Query failed, aborting...")
             return None
 
     def _stage_after(self, instr):
         """!
-        Delete's the previous query step's results. Used to discard data that's no longer needed. Important for multi-step queries that yield large result sets.
+        Deletes the previous query step's results. Used to discard data that's no longer needed. Important for multi-step queries that yield large result sets.
 
         @param instr object: Current instruction object
         """
@@ -600,12 +587,8 @@ class JiggleQ(object):
                 
             if (type(subject[field_name]) is list):
                 subject[field_name].append(match)
-            else:
-                jqlog.get(self).warn("Couldn't join record to {0} because a non-array field called {1} already exists".format(str(subject), field_name))
         else:
-            if (field_name in subject):
-                jqlog.get(self).warn("Couldn't join record to {0} because a field called {1} already exists".format(str(subject), field_name))
-            else:
+            if (field_name not in subject):
                 subject[field_name] = match
 
     def _execute_instruction(self, instr):
@@ -619,25 +602,22 @@ class JiggleQ(object):
         response = None
 
         try:
-            response = self._process_response(instr, ScrollShim(instr["q"].scan()) if instr["scroll"] else instr["q"].execute(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
+            response = self._process_response(instr, ScrollShim(instr["q"].stream()) if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
         except ElasticsearchException as e:
-            jqlog.get(self).error("Elasticsearch error: {0}".format(str(e)))
-            response = None
-        except Exception as e:
-            jqlog.get(self).error("Error: {0}".format(str(e)))
             raise
-            response = None
+        except Exception as e:
+            raise
 
         if (response is None):
             return False
         else:
             return True
 
-    def execute(self, scroll=False):
+    def execute(self, stream=False):
         """!
         Execute the query. Runs each query step from left to right.
 
-        @param scroll boolean: If @c True, the data source's @c scan() method will be used to retrieve results. If @c False, the data source's @c execute() method will be used instead.
+        @param stream boolean: If @c True, the data source's @c stream() method will be used to retrieve results. If @c False, the data source's @c batch() method will be used instead.
 
         @see DataSource
         """
@@ -645,8 +625,7 @@ class JiggleQ(object):
             self.result = {}
             stage_index = 0
             for instr in self._instructions:
-                jqlog.get(self).debug("<Step {0}> Running {1} query...".format(stage_index, self._instruction_set[instr["op"]]["name"]))
-                instr["scroll"] = scroll
+                instr["scroll"] = stream
                 if (not self._execute_instruction(instr)):
                     return False
                 else:
@@ -656,12 +635,8 @@ class JiggleQ(object):
 
                 stage_index += 1
         except Exception as e:
-            jqlog.get(self).error("Query failed: {0}".format(e))
             raise
-            return False
 
         return True
 
-if __name__ == "__main__":
-    sys.exit(0)
 
