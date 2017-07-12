@@ -116,10 +116,11 @@ class App(object):
         else:
             self._stdout = sys.stdout
 
-        arg_parser = argparse.ArgumentParser(prog="weaveq", description="A tool that pivots and joins across collections of data with support for various data sources, including Elasticsearch and JSON.")
-        arg_parser.add_argument("-c", "--config", help="Path to the configuration file. Its format is documented at {0}".format(build_constants.config_doc_url), required=True)
-        arg_parser.add_argument("-q", "--query", help="Query string to be executed. Omit this argument or specify - (dash) to read from stdin", required=False)
-        arg_parser.add_argument("-o", "--output", help="Path to the output file containing line-delimitted JSON query results. Omit this argument or specify - (dash) to write to stdout", required=False)
+        arg_parser = argparse.ArgumentParser(prog="weaveq", description="Runs pivot and join queries across collections of data with support for various data sources, including Elasticsearch and JSON.")
+        arg_parser.add_argument("-c", "--config", help="path to the configuration file. Its format is documented at {0}".format(build_constants.config_doc_url), required=True)
+        arg_parser.add_argument("-q", "--query", help="query string to be executed. Omit this argument or specify - (dash) to read from stdin", required=False)
+        arg_parser.add_argument("-o", "--output", help="path to the output file containing line-delimitted JSON query results. Omit this argument or specify - (dash) to write to stdout", required=False)
+        arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}{3}".format(build_constants.major_version, build_constants.minor_version, build_constants.release_version, build_constants.release_phase))
         
         self._args = {}
         if (mock_args is None):
