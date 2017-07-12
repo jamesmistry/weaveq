@@ -37,7 +37,7 @@ class TestResults(object):
                 self._print_progress()
                 self._last_progress = self._progress
 
-            return TestResult(next_record)
+            return TestResult(next_record).to_dict()
         else:
             self._progress = 100.0
             self._print_progress()
@@ -67,7 +67,7 @@ class MockDataSource(object):
         self._id_field_name = id_field_name
         self._size = size
 
-    def execute(self):
+    def batch(self):
         print("{0} ({1})".format(self._step_name, self._size))
         return TestResults(self._id_field_name, self._size)
 
@@ -81,7 +81,7 @@ def pivot_and_join(sizes):
     s.result_handler(r)
 
     t_start = time.time()
-    s.execute(scroll=False)
+    s.execute(stream=False)
     t_end = time.time()
 
     return round(t_end - t_start, 1)
@@ -96,7 +96,7 @@ def pivot_only(sizes):
     s.result_handler(r)
 
     t_start = time.time()
-    s.execute(scroll=False)
+    s.execute(stream=False)
     t_end = time.time()
     
     return round(t_end - t_start, 1)
@@ -111,7 +111,7 @@ def join_only(sizes):
     s.result_handler(r)
 
     t_start = time.time()
-    s.execute(scroll=False)
+    s.execute(stream=False)
     t_end = time.time()
     
     return round(t_end - t_start, 1)
