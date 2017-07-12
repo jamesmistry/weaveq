@@ -39,7 +39,7 @@ class TestResults(object):
         self._simulated_success = success
         self._data = []
         for obj in data:
-            self._data.append(TestResult(obj))
+            self._data.append(TestResult(obj).to_dict())
 
     def __iter__(self):
         return self._data.__iter__()
@@ -82,7 +82,7 @@ class MockDataSource(object):
         """Return to the beginning of the object array in servicing JiggleQ data requests"""
         self._cursor = 0
 
-    def execute(self):
+    def batch(self):
         """Services a JiggleQ data request, returning the next preloaded Python object"""
         return_val = None
 
@@ -364,7 +364,7 @@ class TestJiggleQ(unittest.TestCase):
         q1 = MockDataSource([[{"name":"test1","number":0},{"name":"test2","number":1}]])
         s = JiggleQ(q1)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, q1.data[0])
 
@@ -375,7 +375,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"count":10},{"name_id":6,"count":11},{"name_id":5,"count":12},{"name_id":4,"count":13}]])
         s = JiggleQ(q1).pivot_to(q2, F("id") == F("name_id"))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"count":10},{"name_id":4,"count":13}])
 
@@ -386,7 +386,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"count":10},{"name_id":1,"count":11},{"name_id":5,"count":12},{"name_id":4,"count":13},{"name_id":4,"count":14}]])
         s = JiggleQ(q1).pivot_to(q2, F("id") == F("name_id"))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"count":10},{"name_id":1,"count":11},{"name_id":4,"count":13},{"name_id":4,"count":14}])
 
@@ -397,7 +397,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":1,"letter":"y","count":11},{"name_id":5,"letter":"z","count":12},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":14}]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id")) & (F("name") == F("letter")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"letter":"w","count":10},{"name_id":3,"letter":"y","count":13}])
 
@@ -408,7 +408,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":1,"letter":"y","count":11},{"name_id":5,"letter":"z","count":16},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}]])
         s = JiggleQ(q1).pivot_to(q2, ((F("id") == F("name_id")) & (F("name") == F("letter"))) | (F("target_count") == F("count")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"letter":"w","count":10},{"name_id":1,"letter":"y","count":11},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}])
 
@@ -419,7 +419,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":1,"letter":"y","count":11},{"name_id":5,"letter":"z","count":16},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}]])
         s = JiggleQ(q1).pivot_to(q2, F("id") != F("name_id"))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":5,"letter":"z","count":16}])
 
@@ -430,7 +430,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":6,"letter":"y","count":10},{"name_id":5,"letter":"z","count":12},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") != F("name_id")) & (F("target_count") != F("count")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":6,"letter":"y","count":10}])
 
@@ -441,7 +441,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":6,"letter":"y","count":10},{"name_id":5,"letter":"z","count":12},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") != F("name_id")) | (F("target_count") != F("count")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"letter":"w","count":10},{"name_id":6,"letter":"y","count":10},{"name_id":5,"letter":"z","count":12},{"name_id":3,"letter":"y","count":13}])
 
@@ -452,7 +452,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"letter":"w","count":10},{"name_id":6,"letter":"y","count":10},{"name_id":5,"letter":"z","count":12},{"name_id":3,"letter":"y","count":13},{"name_id":4,"letter":"a","count":15}]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") != F("name_id")) & (F("target_count") == F("count")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":5,"letter":"z","count":12}])
 
@@ -463,7 +463,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":2,"type":"a"}]])
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")) & (F("name") == F("type")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":2,"type":"a","joined_data":{"id":1,"name":"a"}}]) 
 
@@ -474,7 +474,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"type":"a"}]])
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"type":"a","joined_data":{"id":3,"name":"f"}}])
 
@@ -485,7 +485,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":3,"type":"a"}]])
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":3,"type":"a","joined_data":{"id":3,"name":"f"}}])
 
@@ -497,7 +497,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")) & (F("name") == F("type")), field="custom_field_name")
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":3,"name":"a"}}])
 
     def test_join_custom_field_ne(self):
@@ -508,7 +508,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")), field="custom_field_name")
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":3,"name":"f"}}])
 
     def test_join_custom_field_eq(self):
@@ -519,7 +519,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name")
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":3,"type":"a","custom_field_name":{"id":3,"name":"f"}}])
 
     def test_join_custom_field_ne_and_eq(self):
@@ -530,7 +530,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")) & (F("name") == F("type")), field="custom_field_name")
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":3,"name":"a"}}])
 
     def test_join_array_ne(self):
@@ -541,7 +541,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")), field="custom_field_name", array=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         r.results[0]["custom_field_name"].sort()
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":2,"name":"a"},{"id":3,"name":"c"},{"id":4,"name":"f"}]}])
 
@@ -553,7 +553,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         r.results[0]["custom_field_name"].sort()
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]}])
 
@@ -565,7 +565,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") != F("name_id")) & (F("name") == F("type")), field="custom_field_name", array=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         r.results[0]["custom_field_name"].sort()
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":2,"name":"a"},{"id":3,"name":"a"}]}])
 
@@ -577,7 +577,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True, exclude_empty_joins=False)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         r.results[0]["custom_field_name"].sort()
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]},{"name_id":99,"type":"a"}])
 
@@ -589,7 +589,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True, exclude_empty_joins=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         r.results[0]["custom_field_name"].sort()
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]}])
 
@@ -601,7 +601,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=False, exclude_empty_joins=False)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":1,"name":"a"}},{"name_id":99,"type":"a"}])
 
     def test_join_no_array_exclude_empties(self):
@@ -612,7 +612,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=False, exclude_empty_joins=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":1,"name":"a"}}])
 
     def test_join_no_array_multi_results(self):
@@ -623,7 +623,7 @@ class TestJiggleQ(unittest.TestCase):
 
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=False)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":1,"name":"a"}}])
 
     def test_proxy(self):
@@ -635,7 +635,7 @@ class TestJiggleQ(unittest.TestCase):
         
         s = JiggleQ(q1).pivot_to(q2, (F("type_l", proxy=p) == F("type_r", proxy=p)))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertFalse(p.invalid_name)
         self.assertEqual(p.count, 7)
@@ -648,7 +648,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"count":10},{"name_id":6,"count":11},{"name_id":5,"count":12},{"name_id":4,"count":13}]])
         s = JiggleQ(q1).pivot_to(q2, F("id") == F("name_id"))
         s.result_handler(r)
-        self.assertFalse(s.execute(scroll=False))
+        self.assertFalse(s.execute(stream=False))
 
     def test_failed_response(self):
         """Failed response test"""
@@ -657,7 +657,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"count":10},{"name_id":6,"count":11},{"name_id":5,"count":12},{"name_id":4,"count":13}]])
         s = JiggleQ(q1).pivot_to(q2, F("id") == F("name_id"))
         s.result_handler(r)
-        self.assertFalse(s.execute(scroll=False))
+        self.assertFalse(s.execute(stream=False))
 
     def test_missing_field(self):
         """Missing field"""
@@ -666,7 +666,7 @@ class TestJiggleQ(unittest.TestCase):
         q2 = MockDataSource([[{"data":"record_a"},{"data":"record_b"},{"name_id":1,"data":"record_a"},{"id":3,"dat":"record_c"}]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id")) & (F("name") == F("data")))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"name_id":1,"data":"record_a"}])
 
@@ -677,7 +677,7 @@ class TestJiggleQ(unittest.TestCase):
         q3 = MockDataSource([[{"id":20,"record":"record_e"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id"))).pivot_to(q3, F("data") == F("record"))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"id":30,"record":"record_b"},{"id":31,"record":"record_b"}])
 
@@ -688,7 +688,7 @@ class TestJiggleQ(unittest.TestCase):
         q3 = MockDataSource([[{"id":20,"record":"record_c"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="step1", exclude_empty_joins=True).join_to(q3, F("data") == F("record"), field="step2", exclude_empty_joins=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"id":21,"record":"record_a","step2":{"name_id":2,"count":10,"data":"record_a","step1":{"id":2,"name":"record_b"}}}])
 
@@ -699,7 +699,7 @@ class TestJiggleQ(unittest.TestCase):
         q3 = MockDataSource([[{"id":20,"record":"record_e"},{"id":21,"record":"record_a"},{"id":30,"record":"record_b"},{"id":31,"record":"record_b"},]])
         s = JiggleQ(q1).pivot_to(q2, (F("id") == F("name_id"))).join_to(q3, F("data") == F("record"), exclude_empty_joins=True)
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"id":30,"record":"record_b","joined_data":{"name_id":2,"count":10,"data":"record_b"}},{"id":31,"record":"record_b","joined_data":{"name_id":2,"count":10,"data":"record_b"}}])
 
@@ -710,7 +710,7 @@ class TestJiggleQ(unittest.TestCase):
         q3 = MockDataSource([[{"id":2,"record":"record_c"},{"id":21,"record":"record_a"},{"id":2,"record":"record_b"},{"id":31,"record":"record_b"},]])
         s = JiggleQ(q1).join_to(q2, (F("id") == F("name_id")), field="step1", exclude_empty_joins=True).pivot_to(q3, F("step1.id") == F("id"))
         s.result_handler(r)
-        s.execute(scroll=False)
+        s.execute(stream=False)
 
         self.assertEqual(r.results, [{"id":2,"record":"record_c"},{"id":2,"record":"record_b"}])
 
