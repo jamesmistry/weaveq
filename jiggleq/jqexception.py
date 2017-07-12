@@ -33,3 +33,31 @@ class ConfigurationError(JiggleQError):
         @param message string: Error description
         """
         super(ConfigurationError, self).__init__(message)
+
+class DataSourceBuildError(JiggleQError):
+    """!
+    Exception thrown when a data source build operation encounters an error.
+
+    @param message string: Error description
+    """
+    def __init__(self, message):
+        """!
+        Constructor.
+        
+        @param message string: Error description
+        """
+        super(DataSourceBuildError, self).__init__(message)
+
+class DataSourceError(JiggleQError):
+    """!
+    Exception thrown when a data source encounters an error.
+
+    @param message string: Error description
+    """
+    def __init__(self, message):
+        """!
+        Constructor.
+        
+        @param message string: Error description
+        """
+        super(DataSourceError, self).__init__(message)
