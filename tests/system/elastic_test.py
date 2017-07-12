@@ -11,6 +11,7 @@ from elasticsearch_dsl import Search
 import generate_data
 from jiggleq.query import JiggleQ
 from jiggleq.relations import F
+from jiggleq.datasources import ElasticsearchDataSource
 import data.load_data
 
 tracer = logging.getLogger("jiggleq")
@@ -113,17 +114,16 @@ class TestElasticIntegration(unittest.TestCase):
         time.sleep(10)
 
         # Prepare the Elasticsearch queries for feeding JiggleQ
-        c = Elasticsearch(hosts=["{0}:{1}".format(elastic_host, elastic_port)])
-        q1 = Search(using=c, index="jiggleqsystest_set0").query("match", field_0="data_0_0")
-        q2 = Search(using=c, index="jiggleqsystest_set1").query("match", field_1="data_1_1")
-        q3 = Search(using=c, index="jiggleqsystest_set2").query("match", field_0="data_2_0")
+        q1 = ElasticsearchDataSource("jiggleqsystest_set0", "field_0=\"data_0_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
+        q2 = ElasticsearchDataSource("jiggleqsystest_set1", "field_1=\"data_1_1\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
+        q3 = ElasticsearchDataSource("jiggleqsystest_set2", "field_0=\"data_2_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
 
         r = TestResultHandler()
         s = JiggleQ(q1).pivot_to(q2, F("key_0_1") == F("key_1_1")).join_to(q3, (F("key_1_0") == F("key_2_0")) & (F("key_1_1") == F("key_2_1")) & (F("key_1_2") == F("key_2_2")), field="joined_rec", array=True, exclude_empty_joins=True)
         s.result_handler(r)
 
         t_start = time.time()
-        s.execute(scroll=True)
+        s.execute(stream=True)
         t_end = time.time()
         elapsed_time = round(t_end - t_start, 1)
 
