@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 import os
 import time
@@ -54,6 +56,16 @@ class TestResultHandler(object):
         if ("key_1_2" not in result["joined_rec"][0]):
             self.invalid_record_count += 1
             tracer.error("Invalid joined record, key key_1_2 doesn't exist")
+            return
+
+        if (u"ψυχοφθόρα_field_2" not in result):
+            self.invalid_record_count += 1
+            tracer.error(u"UTF-8 data field ψυχοφθόρα_field_2 doesn't exist")
+            return
+
+        if (result[u"ψυχοφθόρα_field_2"] != u"ψυχοφθόρα"):
+            self.invalid_record_count += 1
+            tracer.error(u"UTF-8 data field doesn't contain expected UTF-8 data ψυχοφθόρα")
             return
 
     def success(self):
