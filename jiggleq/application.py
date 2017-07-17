@@ -6,11 +6,33 @@ import sys
 
 import build_constants
 import jqexception
+import parser
+import query
+import datasources
+
+class FileOutputResultHandler(query.ResultHandler):
+    def __init__(self, file_object):
+        """!
+        Constructor.
+
+        @param file_object string: open file object to which results should be written
+        """
+        self._destination = file_object
+    
+    def __call__(self, result, handler_output):
+        print(json.dumps(result), file=self._destination)
+
+    def success(self):
+        return True
 
 class Config(object):
     """!
     Loads, parses and validates an application configuration.
     """
+
+    @staticmethod
+    def default_config():
+        return {"data_sources":{"elasticsearch":None,"csv":{"first_row_contains_field_names":True}}}
 
     def __init__(self, config_filename = None):
         """!
@@ -117,7 +139,7 @@ class App(object):
             self._stdout = sys.stdout
 
         arg_parser = argparse.ArgumentParser(prog="weaveq", description="Runs pivot and join queries across collections of data with support for various data sources, including Elasticsearch and JSON.")
-        arg_parser.add_argument("-c", "--config", help="path to the configuration file. Its format is documented at {0}".format(build_constants.config_doc_url), required=True)
+        arg_parser.add_argument("-c", "--config", help="path to the configuration file. Its format is documented at {0}".format(build_constants.config_doc_url), required=False)
         arg_parser.add_argument("-q", "--query", help="query string to be executed. Omit this argument or specify - (dash) to read from stdin", required=False)
         arg_parser.add_argument("-o", "--output", help="path to the output file containing line-delimitted JSON query results. Omit this argument or specify - (dash) to write to stdout", required=False)
         arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}{3}".format(build_constants.major_version, build_constants.minor_version, build_constants.release_version, build_constants.release_phase))
@@ -129,12 +151,15 @@ class App(object):
             self._args = vars(arg_parser.parse_args(mock_args))
 
         self._config = None
-        try:
-            config_loader = Config(self._args["config"])
-            self._config = config_loader.config
-        except Exception as e:
-            print("Couldn't load configuration file. {1}".format(self._args["config"], str(e)), file=sys.stderr)
-            raise
+        if (self._args["config"] is None):
+            self._config = Config.default_config()
+        else:
+            try:
+                config_loader = Config(self._args["config"])
+                self._config = config_loader.config
+            except Exception as e:
+                print("Couldn't load configuration file. {1}".format(self._args["config"], str(e)), file=sys.stderr)
+                raise
 
         if (self._args["output"] is not None):
             if (self._args["output"] == "-"):
@@ -186,4 +211,21 @@ class App(object):
         return return_val
 
     def run(self):
-       pass
+        builder = datasources.AppDataSourceBuilder(self._config)
+        query_compiler = parser.TextQuery(builder)
+
+        try:
+            compiled_query = query_compiler.compile_query(self._query_string)
+        except Exception as e:
+            print("Error compiling query. {0}".format(str(e)), file=sys.stderr)
+            raise
+
+        result_handler = FileOutputResultHandler(self._output_file)
+        compiled_query.result_handler(result_handler)
+
+        try:
+            compiled_query.execute(stream=True)
+        except Exception as e:
+            print("Error running query. {0}".format(str(e)), file=sys.stderr)
+            raise
+
