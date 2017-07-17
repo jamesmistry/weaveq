@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import random
 import json
 
@@ -21,6 +23,7 @@ class TestRecord(object):
 
         self.rec["field_0"] = "data_{0}_0".format(collection.index)
         self.rec["field_1"] = "data_{0}_1".format(collection.index)
+        self.rec[u"ψυχοφθόρα_field_2"] = u"ψυχοφθόρα"
         self.rec["doctype"] = "jiggleqsystest_set{0}".format(collection.index)
        
 class TestCollection(object):
