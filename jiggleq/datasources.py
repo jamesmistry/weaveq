@@ -7,6 +7,7 @@ import sys
 import abc
 import json
 import csv
+import collections
 import elasticsearch
 import elasticsearch_dsl
 
@@ -60,7 +61,7 @@ class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
     def _load_json_lines(self):
         with open(self.filename) as json_file:
             for json_line in json_file:
-                json_record = json.loads(json_line)
+                json_record = json.loads(json_line, object_pairs_hook=collections.OrderedDict)
                 yield json_record
 
     def batch(self):
@@ -121,7 +122,7 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
     def _load_json(self):
         json_doc = None
         with open(self.filename) as json_file:
-            json_doc = json.load(json_file)
+            json_doc = json.load(json_file, object_pairs_hook=collections.OrderedDict)
 
         if (not isinstance(json_doc, list)):
             raise jqexception.DataSourceError("The json data source requires that JSON documents contain lists as their root elements")
@@ -197,7 +198,7 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
                         field_names.append(unicode(column, "utf-8"))
                 else:
                     column_index = 0
-                    record = {}
+                    record = collections.OrderedDict()
                     for column in row:
                         column_name = None
                         if (len(field_names) >= column_index + 1):
@@ -258,7 +259,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
 
         self.config = self._validate_config(config)
 
-        elastic_client = elasticsearch.Elasticsearch(hosts=self.config["hosts"], timeout=self.config["timeout"], use_ssl=self.config["use_ssl"], verify_certs=self.config["verify_certs"], ca_certs=self.config["ca_certs"], client_cert=self.config["client_cert"], client_key=self.config["client_key"])
+        elastic_client = elasticsearch.Elasticsearch(**self.config)
         self._elastic_source = elasticsearch_dsl.Search(using=elastic_client, index=index_name).query("query_string", query=filter_string)
 
     def _validate_config(self, config):
@@ -350,6 +351,10 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
             return_val["source_type"] = source_uri[0:type_delim].lower()
             try:
                 return_val["data_source_class"] = self._source_type_mappings[return_val["source_type"]]
+
+                # Normalise the source type string to the first one in the returned list
+                # This is so that config keys can be reliably mapped to ident strings
+                return_val["source_type"] = return_val["data_source_class"].string_idents()[0]
             except KeyError:
                 raise jqexception.DataSourceBuildError("The data source type specified, '{0}', is not valid. Valid data source types are: {1}".format(return_val["source_type"], self.valid_source_types))
             
