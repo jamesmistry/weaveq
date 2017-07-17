@@ -116,8 +116,8 @@ class StdoutResultHandler(ResultHandler):
         """!
         Step result handler entry point.
 
-        @param result object: A result to be handled.
-        @param handler_output array: Where the handler's output should be placed. Not used by this handler.
+        @param result dict: A result to be handled.
+        @param handler_output list: Where the handler's output should be placed. Not used by this handler.
         """
         print(str(result), file=sys.stdout)
 
