@@ -49,7 +49,7 @@ class TestConfig(unittest.TestCase):
         """Parse a correctly formatted source type out of a URI string, using an alternative source type ident string.
         """
         subject = AppDataSourceBuilder({})
-        self.assertEquals(subject._parse_uri("jsl:/test/uri"), {"source_type":"jsl", "uri":"/test/uri", "data_source_class":JsonLinesDataSource})
+        self.assertEquals(subject._parse_uri("jsl:/test/uri"), {"source_type":"json_lines", "uri":"/test/uri", "data_source_class":JsonLinesDataSource})
 
     def test_parse_uri_invalid(self):
         """Parse a missing source type from a URI string
@@ -91,12 +91,25 @@ class TestConfig(unittest.TestCase):
         """Elasticsearch datasource config items are correctly set to defaults.
         """
         subject = AppDataSourceBuilder({"data_sources":{"elasticsearch":{"hosts":["127.0.0.1:5601"]}}})("elasticsearch:test_index_name", "test_filter_string")
+        self.assertEquals(subject.config["hosts"], ["127.0.0.1:5601"])
         self.assertEquals(subject.config["timeout"], 10)
         self.assertEquals(subject.config["use_ssl"], False)
         self.assertEquals(subject.config["verify_certs"], False)
         self.assertEquals(subject.config["ca_certs"], None)
         self.assertEquals(subject.config["client_cert"], None)
         self.assertEquals(subject.config["client_key"], None)
+
+    def test_elasticds_supplied_config(self):
+        """Elasticsearch datasource config applied correctly
+        """
+        subject = AppDataSourceBuilder({"data_sources":{"elasticsearch":{"hosts":["127.0.0.1:5601","10.10.10.1:1280"],"timeout":20,"use_ssl":True,"verify_certs":True,"ca_certs":"/tmp/ca_certs","client_cert":"/tmp/client_cert","client_key":"/tmp/client_key"}}})("elasticsearch:test_index_name", "test_filter_string")
+        self.assertEquals(subject.config["hosts"], ["127.0.0.1:5601","10.10.10.1:1280"])
+        self.assertEquals(subject.config["timeout"], 20)
+        self.assertEquals(subject.config["use_ssl"], True)
+        self.assertEquals(subject.config["verify_certs"], True)
+        self.assertEquals(subject.config["ca_certs"], "/tmp/ca_certs")
+        self.assertEquals(subject.config["client_cert"], "/tmp/client_cert")
+        self.assertEquals(subject.config["client_key"], "/tmp/client_key")
 
     def test_json_lines_batch_load(self):
         """json_lines data source batch loads a file successfully.
