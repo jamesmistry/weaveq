@@ -9,7 +9,7 @@ import os
 import types
 
 from weaveq.application import Config, App
-from weaveq import jqexception
+from weaveq import wqexception
 
 class TestConfig(unittest.TestCase):
     """Tests Config class
@@ -33,34 +33,34 @@ class TestConfig(unittest.TestCase):
         """Multiple path elements passed to item validator, one missing
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_el":{"test_el2":{"test_elc":"test_val"}}}, "test_el/test_el2/test_el3", str)
             
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_el":{"test_elb":{"test_el3":"test_val"}}}, "test_el/test_el2/test_el3", str)
 
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_e":{"test_el2":{"test_el3":"test_val"}}}, "test_el/test_el2/test_el3", str)
 
     def test_validate_item_wrong_type(self):
         """Item is wrong type
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_el":{"test_el2":{"test_el3":"test_val"}}}, "test_el/test_el2/test_el3", int)
 
     def test_validate_item_less_than_min_len(self):
         """Item contains too few elements
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_el":{"test_el2":{"test_el3":[1]}}}, "test_el/test_el2/test_el3", list, 2)
 
     def test_validate_item_more_than_max_len(self):
         """Item contains too many elements
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject._validate_item({"test_el":{"test_el2":{"test_el3":[1,2]}}}, "test_el/test_el2/test_el3", list, 1, 1)
 
     def test_validate_item_len_in_range(self):
@@ -79,28 +79,28 @@ class TestConfig(unittest.TestCase):
         """Correct root element, but not dict
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject.apply_config({"data_sources":""})
 
     def test_config_elk_bad_type(self):
         """Elastic data source, but not dict
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject.apply_config({"data_sources":{"elasticsearch":""}})
 
     def test_config_elk_hosts_bad_type(self):
         """Elastic hosts but not list
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject.apply_config({"data_sources":{"elasticsearch":{"hosts":""}}})
 
     def test_config_elk_host_el_bad_type(self):
         """Elastic hosts with non-str host
         """
         subject = Config()
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject.apply_config({"data_sources":{"elasticsearch":["testhost",1,"testhost2"]}})
 
     def test_config_min_valid(self):
@@ -156,7 +156,7 @@ class TestApp(unittest.TestCase):
         with open(self._config_file[1], "w") as config_file:
             config_file.write("{}")
 
-        with self.assertRaises(jqexception.ConfigurationError):
+        with self.assertRaises(wqexception.ConfigurationError):
             subject = App(mock_args=["-c", self._config_file[1]])
 
     def test_config_valid_explicit_query_string(self):

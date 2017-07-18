@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""!
+@package weaveq.wqexception Exception classes.
+"""
+
 class WeaveQError(Exception):
     """!
     Superclass of all WeaveQ exceptions.

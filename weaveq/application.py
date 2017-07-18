@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""!
+@package weaveq.application Application entry point.
+"""
+
 from __future__ import print_function
 import json
 import argparse
@@ -7,7 +11,7 @@ import types
 import sys
 
 import build_constants
-import jqexception
+import wqexception
 import parser
 import query
 import datasources
@@ -49,7 +53,7 @@ class Config(object):
                 with open(config_filename) as config_file:
                     config_data = json.load(config_file)
             except (OSError, IOError) as e:
-                raise jqexception.ConfigurationError("Problem reading file: {0}".format(str(e)))
+                raise wqexception.ConfigurationError("Problem reading file: {0}".format(str(e)))
 
             self.apply_config(config_data)
 
@@ -60,20 +64,20 @@ class Config(object):
         for el in path_elements:
             path_so_far = "{0}{1}{2}".format(path_so_far, "/" if (len(path_so_far) > 0) else "", el)
             if (el not in cur_obj):
-                raise jqexception.ConfigurationError("Missing '{0}' configuration item (configuration file format is documented at {1})".format(path_so_far, build_constants.config_doc_url))
+                raise wqexception.ConfigurationError("Missing '{0}' configuration item (configuration file format is documented at {1})".format(path_so_far, build_constants.config_doc_url))
             
             cur_obj = cur_obj[el]
 
         if (not isinstance(cur_obj, required_type)):
-            raise jqexception.ConfigurationError("'{0}' configuration item must be of type {1} (configuration file format is documented at {2})".format(item_path, str(required_type), build_constants.config_doc_url))
+            raise wqexception.ConfigurationError("'{0}' configuration item must be of type {1} (configuration file format is documented at {2})".format(item_path, str(required_type), build_constants.config_doc_url))
 
         if (min_len is not None):
             if (len(cur_obj) < min_len):
-                raise jqexception.ConfigurationError("'{0}' configuration item must contain a minimum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, min_len, len(cur_obj), build_constants.config_doc_url))
+                raise wqexception.ConfigurationError("'{0}' configuration item must contain a minimum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, min_len, len(cur_obj), build_constants.config_doc_url))
 
         if (max_len is not None):
             if (len(cur_obj) > max_len):
-                raise jqexception.ConfigurationError("'{0}' configuration item must contain a maximum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, max_len, len(cur_obj), build_constants.config_doc_url))
+                raise wqexception.ConfigurationError("'{0}' configuration item must contain a maximum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, max_len, len(cur_obj), build_constants.config_doc_url))
 
     def apply_config(self, config_data):
         self._validate_item(config_data, "data_sources", dict, 2, 2)
@@ -82,7 +86,7 @@ class Config(object):
 
         for host in config_data["data_sources"]["elasticsearch"]["hosts"]:
             if (not isinstance(host, types.StringTypes)):
-                raise jqexception.ConfigurationError("Invalid Elasticsearch host specified: host items must be strings, not {0}".format(str(type(host))))
+                raise wqexception.ConfigurationError("Invalid Elasticsearch host specified: host items must be strings, not {0}".format(str(type(host))))
 
         if ("timeout" not in config_data["data_sources"]["elasticsearch"]):
             config_data["data_sources"]["elasticsearch"]["timeout"] = 10

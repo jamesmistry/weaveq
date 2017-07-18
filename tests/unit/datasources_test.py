@@ -11,7 +11,7 @@ import os
 import types
 
 from weaveq.datasources import AppDataSourceBuilder, JsonLinesDataSource, JsonDataSource, CsvDataSource, ElasticsearchDataSource
-from weaveq import jqexception
+from weaveq import wqexception
 
 class TestConfig(unittest.TestCase):
     """Tests Config class
@@ -55,7 +55,7 @@ class TestConfig(unittest.TestCase):
         """Parse a missing source type from a URI string
         """
         subject = AppDataSourceBuilder({})
-        with self.assertRaises(jqexception.DataSourceBuildError):
+        with self.assertRaises(wqexception.DataSourceBuildError):
             subject._parse_uri("/test/uri")
 
     def test_parse_uri_not_greedy(self):
@@ -68,7 +68,7 @@ class TestConfig(unittest.TestCase):
         """Parse an invalid source type from a URI string
         """
         subject = AppDataSourceBuilder({})
-        with self.assertRaises(jqexception.DataSourceBuildError):
+        with self.assertRaises(wqexception.DataSourceBuildError):
             subject._parse_uri("invalid_source_type:/test/uri")
 
     def test_datasource_construction(self):
@@ -84,7 +84,7 @@ class TestConfig(unittest.TestCase):
     def test_elasticds_no_hosts_config(self):
         """Elasticsearch datasource is not configured with hosts.
         """
-        with self.assertRaises(jqexception.DataSourceBuildError):
+        with self.assertRaises(wqexception.DataSourceBuildError):
             subject = AppDataSourceBuilder({"data_sources":{"elasticsearch":{}}})("elasticsearch:test_index_name", "test_filter_string")
 
     def test_elasticds_default_config(self):
@@ -224,7 +224,7 @@ class TestConfig(unittest.TestCase):
 
         try:
             subject = JsonDataSource(tmpfile[1], None)
-            with self.assertRaises(jqexception.DataSourceError):
+            with self.assertRaises(wqexception.DataSourceError):
                 subject.batch()
                 
         finally:

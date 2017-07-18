@@ -5,7 +5,7 @@ Tests for weaveq.parser
 import unittest
 
 from weaveq.parser import TextQuery, DataSourceBuilder
-from weaveq.jqexception import TextQueryCompileError
+from weaveq.wqexception import TextQueryCompileError
 
 class TestDataSource(object):
     """A data source mock that always succeeds

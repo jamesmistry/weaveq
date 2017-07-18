@@ -15,7 +15,7 @@ import elasticsearch_dsl
 
 import parser
 import query
-import jqexception
+import wqexception
 
 class DiscoverableDataSource(object):
     """!
@@ -42,10 +42,10 @@ class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
         super(JsonLinesDataSource, self).__init__(filename, filter_string)
 
         if (config is not None):
-            raise jqexception.DataSourceBuildError("The json_lines data source type does not currently support any configuration parameters.")
+            raise wqexception.DataSourceBuildError("The json_lines data source type does not currently support any configuration parameters.")
 
         if (filter_string is not None):
-            raise jqexception.DataSourceBuildError("The json_lines data source type does not currently support the #filter statement.")
+            raise wqexception.DataSourceBuildError("The json_lines data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -103,10 +103,10 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
         super(JsonDataSource, self).__init__(filename, filter_string)
 
         if (config is not None):
-            raise jqexception.DataSourceBuildError("The json data source type does not currently support any configuration parameters.")
+            raise wqexception.DataSourceBuildError("The json data source type does not currently support any configuration parameters.")
 
         if (filter_string is not None):
-            raise jqexception.DataSourceBuildError("The json data source type does not currently support the #filter statement.")
+            raise wqexception.DataSourceBuildError("The json data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -127,7 +127,7 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
             json_doc = json.load(json_file, object_pairs_hook=collections.OrderedDict)
 
         if (not isinstance(json_doc, list)):
-            raise jqexception.DataSourceError("The json data source requires that JSON documents contain lists as their root elements")
+            raise wqexception.DataSourceError("The json data source requires that JSON documents contain lists as their root elements")
 
         return json_doc
 
@@ -166,10 +166,10 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
         super(CsvDataSource, self).__init__(filename, filter_string)
 
         if (config is None):
-            raise jqexception.DataSourceBuildError("The csv data source type requires configuration parameters to be supplied.")
+            raise wqexception.DataSourceBuildError("The csv data source type requires configuration parameters to be supplied.")
 
         if (filter_string is not None):
-            raise jqexception.DataSourceBuildError("The csv data source type does not currently support the #filter statement.")
+            raise wqexception.DataSourceBuildError("The csv data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -249,7 +249,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
         super(ElasticsearchDataSource, self).__init__(index_name, filter_string)
 
         if (config is None):
-            raise jqexception.DataSourceBuildError("The elasticsearch data source type requires configuration parameters to be supplied.")
+            raise wqexception.DataSourceBuildError("The elasticsearch data source type requires configuration parameters to be supplied.")
 
         ## @var index_name
         # Name of the target Elasticsearch index
@@ -266,7 +266,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
 
     def _validate_config(self, config):
         if ("hosts" not in config):
-            raise jqexception.DataSourceBuildError("'hosts' is a required element in the Elasticsearch data source configuration.")
+            raise wqexception.DataSourceBuildError("'hosts' is a required element in the Elasticsearch data source configuration.")
         if ("timeout" not in config):
             config["timeout"] = 10
         if ("use_ssl" not in config):
@@ -347,7 +347,7 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
 
         type_delim = source_uri.find(":")
         if (type_delim == -1):
-            raise jqexception.DataSourceBuildError("A data source type must be specified in the format '<source type>:<source URI>'. For example: json_lines:/path/to/file")
+            raise wqexception.DataSourceBuildError("A data source type must be specified in the format '<source type>:<source URI>'. For example: json_lines:/path/to/file")
         else:
             return_val["uri"] = source_uri[type_delim+1:]
             return_val["source_type"] = source_uri[0:type_delim].lower()
@@ -358,7 +358,7 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
                 # This is so that config keys can be reliably mapped to ident strings
                 return_val["source_type"] = return_val["data_source_class"].string_idents()[0]
             except KeyError:
-                raise jqexception.DataSourceBuildError("The data source type specified, '{0}', is not valid. Valid data source types are: {1}".format(return_val["source_type"], self.valid_source_types))
+                raise wqexception.DataSourceBuildError("The data source type specified, '{0}', is not valid. Valid data source types are: {1}".format(return_val["source_type"], self.valid_source_types))
             
             return return_val
 

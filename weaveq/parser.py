@@ -11,7 +11,7 @@ import copy
 import query
 from relations import F
 from query import WeaveQ
-from jqexception import TextQueryCompileError
+from wqexception import TextQueryCompileError
 
 class DataSourceBuilder(object):
     """!

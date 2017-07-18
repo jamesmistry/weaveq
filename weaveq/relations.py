@@ -6,9 +6,9 @@
 
 import copy
 
-import jqexception
+import wqexception
 
-class FieldMustBeRelated(jqexception.WeaveQError):
+class FieldMustBeRelated(wqexception.WeaveQError):
     """!
     Thrown when only a field object is provided when an expression of the form [field] [operator] [field] is expected
     """
@@ -18,7 +18,7 @@ class FieldMustBeRelated(jqexception.WeaveQError):
         """
         super(FieldMustBeRelated, self).__init__("Each left-hand field specified must be related to a right-hand field by a comparison operator. For example, F(leftField) == F(rightField) instead of F(leftField)")
 
-class FieldRelationshipNotInParentheses(jqexception.WeaveQError):
+class FieldRelationshipNotInParentheses(wqexception.WeaveQError):
     """!
     Thrown when there's ambiguity caused by a field relationship not being enclosed in parentheses
 
