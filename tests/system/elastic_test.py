@@ -14,12 +14,12 @@ from elasticsearch import Elasticsearch
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search
 import generate_data
-from jiggleq.query import JiggleQ
-from jiggleq.relations import F
-from jiggleq.datasources import ElasticsearchDataSource
+from weaveq.query import WeaveQ
+from weaveq.relations import F
+from weaveq.datasources import ElasticsearchDataSource
 import data.load_data
 
-tracer = logging.getLogger("jiggleq")
+tracer = logging.getLogger("weaveq")
 tracer.setLevel(logging.INFO)
 tracer.addHandler(sys.stdout)
 
@@ -41,14 +41,14 @@ class TestResultHandler(object):
             tracer.error("Invalid record, expected join count: 333; actual join count: {0}".format(len(result["joined_rec"])))
             return
 
-        if (result["doctype"] != "jiggleqsystest_set2"):
+        if (result["doctype"] != "weaveqsystest_set2"):
             self.invalid_record_count += 1
-            tracer.error("Invalid record, expected doctype: jiggleqsystest_set2; actual doctype: {0}".format(result["doctype"]))
+            tracer.error("Invalid record, expected doctype: weaveqsystest_set2; actual doctype: {0}".format(result["doctype"]))
             return
 
-        if (result["joined_rec"][0]["doctype"] != "jiggleqsystest_set1"):
+        if (result["joined_rec"][0]["doctype"] != "weaveqsystest_set1"):
             self.invalid_record_count += 1
-            tracer.error("Invalid joined record, expected doctype: jiggleqsystest_set1; actual doctype: {0}".format(result["doctype"]))
+            tracer.error("Invalid joined record, expected doctype: weaveqsystest_set1; actual doctype: {0}".format(result["doctype"]))
             return
 
         if ("key_2_2" not in result):
@@ -128,13 +128,13 @@ class TestElasticIntegration(unittest.TestCase):
         # Ugly, but need to give Elastic some time to index the data
         time.sleep(10)
 
-        # Prepare the Elasticsearch queries for feeding JiggleQ
-        q1 = ElasticsearchDataSource("jiggleqsystest_set0", "field_0=\"data_0_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
-        q2 = ElasticsearchDataSource("jiggleqsystest_set1", "field_1=\"data_1_1\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
-        q3 = ElasticsearchDataSource("jiggleqsystest_set2", "field_0=\"data_2_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
+        # Prepare the Elasticsearch queries for feeding WeaveQ
+        q1 = ElasticsearchDataSource("weaveqsystest_set0", "field_0=\"data_0_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
+        q2 = ElasticsearchDataSource("weaveqsystest_set1", "field_1=\"data_1_1\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
+        q3 = ElasticsearchDataSource("weaveqsystest_set2", "field_0=\"data_2_0\"", {"hosts":["{0}:{1}".format(elastic_host, elastic_port)]})
 
         r = TestResultHandler()
-        s = JiggleQ(q1).pivot_to(q2, F("key_0_1") == F("key_1_1")).join_to(q3, (F("key_1_0") == F("key_2_0")) & (F("key_1_1") == F("key_2_1")) & (F("key_1_2") == F("key_2_2")), field="joined_rec", array=True, exclude_empty_joins=True)
+        s = WeaveQ(q1).pivot_to(q2, F("key_0_1") == F("key_1_1")).join_to(q3, (F("key_1_0") == F("key_2_0")) & (F("key_1_1") == F("key_2_1")) & (F("key_1_2") == F("key_2_2")), field="joined_rec", array=True, exclude_empty_joins=True)
         s.result_handler(r)
 
         t_start = time.time()
@@ -150,7 +150,7 @@ class TestElasticIntegration(unittest.TestCase):
                 f.write(json.dumps({"data_sources":{"elasticsearch":{"hosts":["{0}:{1}".format(elastic_host, elastic_port)]}, "csv":{"first_row_contains_field_names":True}}}))
 
             runner = prog_test.AppRunner()
-            runner.run('#from "el:jiggleqsystest_set0" #as set0 #filter |*| #pivot-to "el:jiggleqsystest_set1" #as set1 #filter |*| #where set0.key_0_1=set1.key_1_1 #join-to "el:jiggleqsystest_set2" #as set2 #filter |*| #where set1.key_1_0 = set2.key_2_0 and set1.key_1_1 = set2.key_2_1 and set1.key_1_2 = set2.key_2_2 #field-name joined_rec #array #exclude-empty', config_file = config[1])
+            runner.run('#from "el:weaveqsystest_set0" #as set0 #filter |*| #pivot-to "el:weaveqsystest_set1" #as set1 #filter |*| #where set0.key_0_1=set1.key_1_1 #join-to "el:weaveqsystest_set2" #as set2 #filter |*| #where set1.key_1_0 = set2.key_2_0 and set1.key_1_1 = set2.key_2_1 and set1.key_1_2 = set2.key_2_2 #field-name joined_rec #array #exclude-empty', config_file = config[1])
             self.assertEquals(runner.exit_code, 0)
 
             r = TestResultHandler()

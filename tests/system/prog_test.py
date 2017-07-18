@@ -18,9 +18,9 @@ class AppRunner(object):
 
         cmd = []
         if (config_file is None):
-            cmd = ["python", os.path.join(app_path, "jiggleq")]
+            cmd = ["python", os.path.join(app_path, "weaveq")]
         else:
-            cmd = ["python", os.path.join(app_path, "jiggleq"), "-c", config_file]
+            cmd = ["python", os.path.join(app_path, "weaveq"), "-c", config_file]
 
         if (not stdin):
             cmd.append("-q")

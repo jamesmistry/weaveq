@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_functioni
+from __future__ import print_function
 import logging
 import string
 import sys
 import time
 
-from jiggleq.query import JiggleQ
-from jiggleq.relations import F
+from weaveq.query import WeaveQ
+from weaveq.relations import F
 
 class TestResult(object):
     def __init__(self, data):
@@ -79,7 +79,7 @@ def pivot_and_join(sizes):
     q2 = MockDataSource("second_id", sizes[1], "Step 2")
     q3 = MockDataSource("third_id", sizes[2], "Step 3")
 
-    s = JiggleQ(q1).pivot_to(q2, F("id") == F("second_id")).join_to(q3, F("second_id") == F("third_id"))
+    s = WeaveQ(q1).pivot_to(q2, F("id") == F("second_id")).join_to(q3, F("second_id") == F("third_id"))
     s.result_handler(r)
 
     t_start = time.time()
@@ -94,7 +94,7 @@ def pivot_only(sizes):
     q2 = MockDataSource("second_id", sizes[1], "Step 2")
     q3 = MockDataSource("third_id", sizes[2], "Step 3")
 
-    s = JiggleQ(q1).pivot_to(q2, F("id") == F("second_id")).pivot_to(q3, F("second_id") == F("third_id"))
+    s = WeaveQ(q1).pivot_to(q2, F("id") == F("second_id")).pivot_to(q3, F("second_id") == F("third_id"))
     s.result_handler(r)
 
     t_start = time.time()
@@ -109,7 +109,7 @@ def join_only(sizes):
     q2 = MockDataSource("second_id", sizes[1], "Step 2")
     q3 = MockDataSource("third_id", sizes[2], "Step 3")
 
-    s = JiggleQ(q1).join_to(q2, F("id") == F("second_id")).join_to(q3, F("second_id") == F("third_id"))
+    s = WeaveQ(q1).join_to(q2, F("id") == F("second_id")).join_to(q3, F("second_id") == F("third_id"))
     s.result_handler(r)
 
     t_start = time.time()

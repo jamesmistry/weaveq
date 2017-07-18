@@ -1,5 +1,5 @@
 """@package application_test
-Tests for jiggleq.application
+Tests for weaveq.application
 """
 
 import unittest
@@ -8,8 +8,8 @@ import json
 import os
 import types
 
-from jiggleq.application import Config, App
-from jiggleq import jqexception
+from weaveq.application import Config, App
+from weaveq import jqexception
 
 class TestConfig(unittest.TestCase):
     """Tests Config class

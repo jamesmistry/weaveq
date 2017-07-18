@@ -5,10 +5,10 @@ import sys
 
 def get(obj):
     """
-    Get a logger for JiggleQ.
+    Get a logger for WeaveQ.
 
     @param obj: The calling object.
     """
 
-    return logging.getLogger("jiggleq")
+    return logging.getLogger("weaveq")
 

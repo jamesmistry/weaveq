@@ -1,11 +1,11 @@
 """@package parser_test
-Tests for jiggleq.parser
+Tests for weaveq.parser
 """
 
 import unittest
 
-from jiggleq.parser import TextQuery, DataSourceBuilder
-from jiggleq.jqexception import TextQueryCompileError
+from weaveq.parser import TextQuery, DataSourceBuilder
+from weaveq.jqexception import TextQueryCompileError
 
 class TestDataSource(object):
     """A data source mock that always succeeds

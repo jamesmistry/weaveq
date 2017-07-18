@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 """!
-@package jiggleq.relations Classes for expressing the relationships between fields that override Python operators to provide a simple API and for ease of parsing.
+@package weaveq.relations Classes for expressing the relationships between fields that override Python operators to provide a simple API and for ease of parsing.
 """
 
 import copy
 
 import jqexception
 
-class FieldMustBeRelated(jqexception.JiggleQError):
+class FieldMustBeRelated(jqexception.WeaveQError):
     """!
     Thrown when only a field object is provided when an expression of the form [field] [operator] [field] is expected
     """
@@ -18,7 +18,7 @@ class FieldMustBeRelated(jqexception.JiggleQError):
         """
         super(FieldMustBeRelated, self).__init__("Each left-hand field specified must be related to a right-hand field by a comparison operator. For example, F(leftField) == F(rightField) instead of F(leftField)")
 
-class FieldRelationshipNotInParentheses(jqexception.JiggleQError):
+class FieldRelationshipNotInParentheses(jqexception.WeaveQError):
     """!
     Thrown when there's ambiguity caused by a field relationship not being enclosed in parentheses
 

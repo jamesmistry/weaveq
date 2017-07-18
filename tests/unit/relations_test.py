@@ -1,13 +1,13 @@
 """@package relations_test
-Tests for jiggleq.relations
+Tests for weaveq.relations
 """
 
 import unittest
 
-from jiggleq.relations import F
-from jiggleq.relations import TargetConditions
-from jiggleq.relations import FieldRelationshipNotInParentheses
-from jiggleq.relations import ConditionNode
+from weaveq.relations import F
+from weaveq.relations import TargetConditions
+from weaveq.relations import FieldRelationshipNotInParentheses
+from weaveq.relations import ConditionNode
 
 class WalkTracer(object):
     """A helper class for tracing the ConditionNode.walk() behaviour.

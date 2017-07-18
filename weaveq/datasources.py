@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """!
-@package jiggleq.datasources DataSource classes and factory for use with the query parser.
+@package weaveq.datasources DataSource classes and factory for use with the query parser.
 """
 
 import inspect
@@ -68,7 +68,7 @@ class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
 
     def batch(self):
         """!
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         return_val = []
 
@@ -133,13 +133,13 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
 
     def batch(self):
         """!
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         return self._load_json()
 
     def stream(self):
         """!
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         json_doc = self._load_json()
         for el in json_doc:
@@ -217,7 +217,7 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
 
     def batch(self):
         """!
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         return_val = []
 
@@ -228,7 +228,7 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
 
     def stream(self):
         """!
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         for row in self._load_csv():
             yield row
@@ -295,7 +295,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
         """!
         Runs the Elasticsearch query using the Elasticsearch DSL @c execute() method, returning the results as a dict.
 
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         result_val = self._elastic_source.execute()
         return result_val.to_dict()
@@ -304,19 +304,19 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
         """!
         Runs the Elasticsearch query using the Elasticsearch DSL @c scan() method, and therefore the scroll API, returning a generator to allow iteration over the resultset.
 
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         for hit in self._elastic_source.scan():
             yield hit.to_dict()
 
 class AppDataSourceBuilder(parser.DataSourceBuilder):
     """!
-    Builds data sources for the JiggleQ application.
+    Builds data sources for the WeaveQ application.
     """
 
     def __init__(self, app_config):
         """!
-        Constructor. Discovers available jiggleq.query.DataSource classes within this module using introspection to identify which classes inherit from DiscoverableDataSource. These classes are then mapped to the ident strings they supply for automatic construction of jiggleq.query.DataSource objects on demand.
+        Constructor. Discovers available weaveq.query.DataSource classes within this module using introspection to identify which classes inherit from DiscoverableDataSource. These classes are then mapped to the ident strings they supply for automatic construction of weaveq.query.DataSource objects on demand.
         """
         self._app_config = app_config
         self._source_type_mappings = {}
@@ -366,10 +366,10 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
         """!
         Builds a data source object from the data source type specified in the supplied URI.
 
-        @param source_uri string: the URI describing the location of the data for the data source to retrieve and the kind of data source required to retrieve it, in the form TYPE:LOCATION where TYPE is a jiggleq.query.DataSource ident string and LOCATION is a location URI in a form meaningful to the specified data source type
+        @param source_uri string: the URI describing the location of the data for the data source to retrieve and the kind of data source required to retrieve it, in the form TYPE:LOCATION where TYPE is a weaveq.query.DataSource ident string and LOCATION is a location URI in a form meaningful to the specified data source type
         @param filter_string string: a filter to be passed to the data source object, which may or may not support it
 
-        @return the build jiggleq.query.DataSource object
+        @return the build weaveq.query.DataSource object
         """
         source = self._parse_uri(source_uri)
 

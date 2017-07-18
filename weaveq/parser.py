@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """!
-@package jiggleq.parser Classes for parsing and compiling textual queries to JiggleQ objects.
+@package weaveq.parser Classes for parsing and compiling textual queries to WeaveQ objects.
 """
 
 from pyparsing import ParseResults, Keyword, CaselessKeyword, Word, alphanums, Optional, CaselessLiteral, Literal, QuotedString, infixNotation, ZeroOrMore, oneOf, OneOrMore, stringEnd, opAssoc, ParseBaseException, Group
@@ -10,14 +10,14 @@ import copy
 
 import query
 from relations import F
-from query import JiggleQ
+from query import WeaveQ
 from jqexception import TextQueryCompileError
 
 class DataSourceBuilder(object):
     """!
     @brief Abstract data source builder functor.
 
-    Defines an interface for client callbacks to be requested to build jiggleq.query.DataSource objects as a result of query parsing. Note that builders don't have to inherit from this class, but must at least expose the interface it defines.
+    Defines an interface for client callbacks to be requested to build weaveq.query.DataSource objects as a result of query parsing. Note that builders don't have to inherit from this class, but must at least expose the interface it defines.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -25,14 +25,14 @@ class DataSourceBuilder(object):
     @abc.abstractmethod
     def __call__(self, source_uri, filter_string):
         """!
-        Called when a jiggleq.query.DataSource object needs to be built in order to run a JiggleQ query.
+        Called when a weaveq.query.DataSource object needs to be built in order to run a WeaveQ query.
 
-        @param source_uri: the URI describing the source of the data (specified by the string literal preceding the @c #as statement in the JiggleQ query)
+        @param source_uri: the URI describing the source of the data (specified by the string literal preceding the @c #as statement in the WeaveQ query)
         @param filter_string: the filter specified to be applied to the data at source (specified by the text within pipe characters in the @c #filter clause), or @c None if no filter was specified
 
-        @return An object either of the type jiggleq.query.DataSource or exposing a compatible interface (e.g. an Elasticsearch DSL query), or @c None if building failed
+        @return An object either of the type weaveq.query.DataSource or exposing a compatible interface (e.g. an Elasticsearch DSL query), or @c None if building failed
 
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         pass
 
@@ -40,7 +40,7 @@ class TextQuery(object):
     """!
     @brief Textual query parser and compiler.
 
-    Compiles a textual query into a JiggleQ object. Data source URIs are specified in the query text, so the client of this class must supply a DataSourceBuilder object for the conversion of these URIs to jiggleq.query.DataSource objects.
+    Compiles a textual query into a WeaveQ object. Data source URIs are specified in the query text, so the client of this class must supply a DataSourceBuilder object for the conversion of these URIs to weaveq.query.DataSource objects.
     """
 
     STEP_TYPE_SEED = 0
@@ -55,9 +55,9 @@ class TextQuery(object):
         """!
         Constructor.
 
-        @param data_source_builder: converts data source URIs to jiggleq.query.DataSource objects
+        @param data_source_builder: converts data source URIs to weaveq.query.DataSource objects
 
-        @see jiggleq.query.DataSource
+        @see weaveq.query.DataSource
         """
         self._identifier = Word(alphanums + "_" + "." + "@" + "$" + "?")
         self._string_literal = QuotedString('"', escChar='\\')
@@ -126,13 +126,13 @@ class TextQuery(object):
 
     def _compile_sub_expr(self, lhs, op, rhs):
         """!
-        Converts a pair of operands and comparison operator into a jiggleq.relations.F object
+        Converts a pair of operands and comparison operator into a weaveq.relations.F object
 
         @param lhs: left-hand side operand as a fully-qualified alias and field name
         @param op: comparison operator as the string representation of the operator
         @param rhs: right-hand side operand as a fully-qualified alias and field name
 
-        @return the jiggleq.relations.F result
+        @return the weaveq.relations.F result
         """
         sub_expr = None
         operands = self._order_operands([lhs, rhs])
@@ -181,7 +181,7 @@ class TextQuery(object):
 
     def _transform_field_relations(self, rel, expr_stack = None):
         """!
-        Converts a nested list representation of a syntax tree, as produced by PyParsing, into the corresponding jiggleq.relations.F representation.
+        Converts a nested list representation of a syntax tree, as produced by PyParsing, into the corresponding weaveq.relations.F representation.
 
         @param rel: infix notation output from PyParsing
         @param expr_stack: current expression stack
@@ -207,7 +207,7 @@ class TextQuery(object):
 
     def _create_step(self, tokens):
         """!
-        Callback during parsing to produce an intermediate representation of a jiggleq.query.JiggleQ
+        Callback during parsing to produce an intermediate representation of a weaveq.query.WeaveQ
 
         @param tokens: tokens from PyParsing
         """
@@ -259,11 +259,11 @@ class TextQuery(object):
 
     def compile_query(self, query_string):
         """!
-        Compiles a textual query into a jiggleq.query.JiggleQ object.
+        Compiles a textual query into a weaveq.query.WeaveQ object.
 
         @param query_string: string containing textual query
 
-        @return jiggleq.query.JiggleQ result
+        @return weaveq.query.WeaveQ result
         """
 
         # Parse the text query
@@ -283,7 +283,7 @@ class TextQuery(object):
                 if (result is not None):
                     raise TextQueryCompileError("Unexpected seed query out of sequence")
 
-                result = JiggleQ(parse_result["data_source"])
+                result = WeaveQ(parse_result["data_source"])
             else:
                 if (result is None):
                     raise TextQueryCompileError("Unexpected non-seed query out of sequence")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """!
-@package jiggleq.query Classes for querying, indexing and filtering Python objects based on a compiled query that associates data sources by field relationships.
+@package weaveq.query Classes for querying, indexing and filtering Python objects based on a compiled query that associates data sources by field relationships.
 """
 
 from __future__ import print_function
@@ -18,7 +18,7 @@ import relations
 
 class DataSource(object):
     """!
-    Abstract data source. Delivers data to JiggleQ for indexing, joining and pivoting.
+    Abstract data source. Delivers data to WeaveQ for indexing, joining and pivoting.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -40,7 +40,7 @@ class DataSource(object):
         """!
         Called with the expectation that the data source will incrementally load relevant data as the returned object is iterated over.
 
-        This method will only be called by JiggleQ if the client passes @c True as the @c stream parameter of @c JiggleQ.execute()
+        This method will only be called by WeaveQ if the client passes @c True as the @c stream parameter of @c WeaveQ.execute()
 
         @return An iterable object that provides access to the individual result objects from the data source.
         """
@@ -300,11 +300,11 @@ class IndexResultHandler(object):
         """
         return (self._hit_group_count > 0)
 
-class JiggleQ(object):
+class WeaveQ(object):
     """!
-    @brief A JiggleQ query.
+    @brief A WeaveQ query.
 
-    A query is made up of one or more steps. The first step is always a "seed" step, consisting only of a data source. A data source is simply an object exposing a particular interface that JiggleQ can use to receive data in the form of Python objects.
+    A query is made up of one or more steps. The first step is always a "seed" step, consisting only of a data source. A data source is simply an object exposing a particular interface that WeaveQ can use to receive data in the form of Python objects.
     
     Subsequent steps will be either "join" or "pivot" steps, and are associated with both a data source and one or more relationship conditions. A relationship condition is a mapping between two fields: one in the results from the previous step's data source (the "right-hand side") and one in the results from the current step's data source (the "left-hand side"). Currently, fields can only be related by equality or inequality.
 
@@ -312,7 +312,7 @@ class JiggleQ(object):
     
     The results of a pivot step are the objects from the step's data source for which the relationship conditions hold for at least one object in the previous step's results (in the case of equality conditions) or for which the relationship conditions hold for all objects in the previous step's results (in the case of inequality conditions).
 
-    @see jiggleq.relations.F
+    @see weaveq.relations.F
     @see DataSource
     """
 
@@ -332,11 +332,11 @@ class JiggleQ(object):
             if (instr_index != 0):
                 return_val += ","
 
-            if (instr["op"] == JiggleQ.OP_SEED):
+            if (instr["op"] == WeaveQ.OP_SEED):
                 return_val += "<pos={0}, op=SEED, q={1}>".format(str(instr_index), str(instr["q"]))
-            elif (instr["op"] == JiggleQ.OP_PIVOT):
+            elif (instr["op"] == WeaveQ.OP_PIVOT):
                 return_val += "<pos={0}, op=PIVOT, q={1}, rels={2}>".format(str(instr_index), str(instr["q"]), str(instr["conditions"]))
-            elif (instr["op"] == JiggleQ.OP_JOIN):
+            elif (instr["op"] == WeaveQ.OP_JOIN):
                 return_val += "<pos={0}, op=JOIN, q={1}, rels={2}, exclude_empty={3}, field_name={4}, array={5}>".format(str(instr_index), str(instr["q"]), str(instr["conditions"]), str(instr["exclude_empty_matches"]), str(instr["field"]), str(instr["array"]))
 
             instr_index += 1
@@ -350,15 +350,15 @@ class JiggleQ(object):
         @param search object: Query seed data source - data for the first step of the query.
         """
         self._instruction_set = {
-            JiggleQ.OP_SEED : {"name" : "seed", "after" : None, "match_callback" : None},
-            JiggleQ.OP_PIVOT : {"name" : "pivot", "after" : self._stage_after, "match_callback" : None},
-            JiggleQ.OP_JOIN : {"name" : "join", "after" : self._stage_after, "match_callback" : self._join_match_callback}
+            WeaveQ.OP_SEED : {"name" : "seed", "after" : None, "match_callback" : None},
+            WeaveQ.OP_PIVOT : {"name" : "pivot", "after" : self._stage_after, "match_callback" : None},
+            WeaveQ.OP_JOIN : {"name" : "join", "after" : self._stage_after, "match_callback" : self._join_match_callback}
         }
 
         self._results = []
 
         self._instructions = []
-        self._instructions.append({"op":JiggleQ.OP_SEED, "conditions":None, "q":search, "conjunctions":None})
+        self._instructions.append({"op":WeaveQ.OP_SEED, "conditions":None, "q":search, "conjunctions":None})
         self._result_handler = StdoutResultHandler()
 
         ## @var result
@@ -379,16 +379,16 @@ class JiggleQ(object):
         Adds a new step to the query that joins the results of the previous step with the results of the added step's data source, when the field relationships specified hold.
 
         @param data_source object: The step's data source object. Must implement the interface defined by DataSource.
-        @param rel jiggleq.relations.F: The field relationships.
+        @param rel weaveq.relations.F: The field relationships.
         @param field string: The name to give the joined field in result objects.
         @param array boolean: Whether or not joined fields should support the joining of multiple objects.
         @param exclude_empty_joins boolean: Whether or not left-hand results that don't have anything joined to them should be discarded.
 
-        @return A JiggleQ object representing the query so far
+        @return A WeaveQ object representing the query so far
         """
         target_conds = relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
-        self._instructions.append({"op":JiggleQ.OP_JOIN, "exclude_empty_matches":exclude_empty_joins, "field":field, "array":array, "conditions":target_conds, "q":data_source, "conjunctions":[]})
+        self._instructions.append({"op":WeaveQ.OP_JOIN, "exclude_empty_matches":exclude_empty_joins, "field":field, "array":array, "conditions":target_conds, "q":data_source, "conjunctions":[]})
         return self
 
     def pivot_to(self, data_source, rel):
@@ -396,13 +396,13 @@ class JiggleQ(object):
         Adds a new step to the query that selects only the results of the data source whose fields are related to the previous step's results according to the relationships specified.
 
         @param data_source object: The step's data source object. Must implement the interface defined by DataSource.
-        @param rel jiggleq.relations.F: The field relationships.
+        @param rel weaveq.relations.F: The field relationships.
 
-        @return A JiggleQ object representing the query so far
+        @return A WeaveQ object representing the query so far
         """
         target_conds = relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
-        self._instructions.append({"op":JiggleQ.OP_PIVOT, "conditions":target_conds, "q":data_source, "conjunctions":[]})
+        self._instructions.append({"op":WeaveQ.OP_PIVOT, "conditions":target_conds, "q":data_source, "conjunctions":[]})
         return self
 
     def _filter_and_store(self, instr, response, filter_conditions, result_handler):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """@package datasources_test
-Tests for jiggleq.datasources
+Tests for weaveq.datasources
 """
 
 import unittest
@@ -10,8 +10,8 @@ import json
 import os
 import types
 
-from jiggleq.datasources import AppDataSourceBuilder, JsonLinesDataSource, JsonDataSource, CsvDataSource, ElasticsearchDataSource
-from jiggleq import jqexception
+from weaveq.datasources import AppDataSourceBuilder, JsonLinesDataSource, JsonDataSource, CsvDataSource, ElasticsearchDataSource
+from weaveq import jqexception
 
 class TestConfig(unittest.TestCase):
     """Tests Config class

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-class JiggleQError(Exception):
+class WeaveQError(Exception):
     """!
-    Superclass of all JiggleQ exceptions.
+    Superclass of all WeaveQ exceptions.
     """
     def __init__(self, message):
         """!
@@ -10,9 +10,9 @@ class JiggleQError(Exception):
 
         @param message string: Error description
         """
-        super(JiggleQError, self).__init__(message)
+        super(WeaveQError, self).__init__(message)
 
-class TextQueryCompileError(JiggleQError):
+class TextQueryCompileError(WeaveQError):
     """!
     Exception thrown when a text query fails to compile.
     """
@@ -24,7 +24,7 @@ class TextQueryCompileError(JiggleQError):
         """
         super(TextQueryCompileError, self).__init__(message)
 
-class ConfigurationError(JiggleQError):
+class ConfigurationError(WeaveQError):
     """!
     Exception thrown when a configuration can't be loaded.
     """
@@ -36,7 +36,7 @@ class ConfigurationError(JiggleQError):
         """
         super(ConfigurationError, self).__init__(message)
 
-class DataSourceBuildError(JiggleQError):
+class DataSourceBuildError(WeaveQError):
     """!
     Exception thrown when a data source build operation encounters an error.
 
@@ -50,7 +50,7 @@ class DataSourceBuildError(JiggleQError):
         """
         super(DataSourceBuildError, self).__init__(message)
 
-class DataSourceError(JiggleQError):
+class DataSourceError(WeaveQError):
     """!
     Exception thrown when a data source encounters an error.
 
