@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """!
 @package jiggleq.datasources DataSource classes and factory for use with the query parser.
 """

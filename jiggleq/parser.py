@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """!
 @package jiggleq.parser Classes for parsing and compiling textual queries to JiggleQ objects.
 """

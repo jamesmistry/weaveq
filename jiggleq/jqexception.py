@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class JiggleQError(Exception):
     """!
     Superclass of all JiggleQ exceptions.

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """!
 @package jiggleq.query Classes for querying, indexing and filtering Python objects based on a compiled query that associates data sources by field relationships.
 """

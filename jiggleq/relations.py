@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """!
 @package jiggleq.relations Classes for expressing the relationships between fields that override Python operators to provide a simple API and for ease of parsing.
 """
