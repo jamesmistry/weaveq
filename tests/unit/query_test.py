@@ -5,7 +5,6 @@ Tests for weaveq.query
 import unittest
 import logging
 
-import weaveq.jqlog
 from weaveq.query import IndexResultHandler
 from weaveq.query import NestedField
 from weaveq.query import WeaveQ
