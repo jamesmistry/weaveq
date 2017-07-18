@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import json
 import os
 import time
 import logging
 import unittest
 import sys
+import tempfile
+import prog_test
 
 from elasticsearch import Elasticsearch
 from elasticsearch import ElasticsearchException
@@ -140,4 +143,22 @@ class TestElasticIntegration(unittest.TestCase):
         elapsed_time = round(t_end - t_start, 1)
 
         self.assertTrue(r.validate())
+
+        config = tempfile.mkstemp()
+        try:
+            with open(config[1], "w") as f:
+                f.write(json.dumps({"data_sources":{"elasticsearch":{"hosts":["{0}:{1}".format(elastic_host, elastic_port)]}, "csv":{"first_row_contains_field_names":True}}}))
+
+            runner = prog_test.AppRunner()
+            runner.run('#from "el:jiggleqsystest_set0" #as set0 #filter |*| #pivot-to "el:jiggleqsystest_set1" #as set1 #filter |*| #where set0.key_0_1=set1.key_1_1 #join-to "el:jiggleqsystest_set2" #as set2 #filter |*| #where set1.key_1_0 = set2.key_2_0 and set1.key_1_1 = set2.key_2_1 and set1.key_1_2 = set2.key_2_2 #field-name joined_rec #array #exclude-empty', config_file = config[1])
+            self.assertEquals(runner.exit_code, 0)
+
+            r = TestResultHandler()
+            for result in runner.results:
+                r(json.loads(result), None)
+
+            self.assertTrue(r.validate())
+        finally:
+            os.unlink(config[1])
+
     
