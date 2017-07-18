@@ -22,9 +22,9 @@ import abc
 import copy
 
 import query
-from relations import F
-from query import WeaveQ
-from wqexception import TextQueryCompileError
+import relations
+import query
+import wqexception
 
 class DataSourceBuilder(object):
     """!
@@ -114,23 +114,23 @@ class TextQuery(object):
         try:
             left_indx = self._source_by_alias[name_l[0:name_l.index(".")]]
         except KeyError:
-            raise TextQueryCompileError("The alias {0} is not assigned to a source".format(name_l))
+            raise wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_l))
 
         try:
             right_indx = self._source_by_alias[name_r[0:name_r.index(".")]]
         except KeyError:
-            raise TextQueryCompileError("The alias {0} is not assigned to a source".format(name_r))
+            raise wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_r))
 
         if (left_indx == len(self._parsed_query) - 1):
             if (right_indx != len(self._parsed_query) - 2):
-                raise TextQueryCompileError("The alias {0} is out of scope".format(name_r))
+                raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
 
             operands[0] = name_r[name_r.index(".")+1:]
             operands[1] = name_l[name_l.index(".")+1:]
         elif (left_indx != len(self._parsed_query) - 2):
-            raise TextQueryCompileError("The alias {0} is out of scope".format(name_l))
+            raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_l))
         elif (right_indx != len(self._parsed_query) - 1):
-            raise TextQueryCompileError("The alias {0} is out of scope".format(name_r))
+            raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
         else:
             operands[0] = name_l[name_l.index(".")+1:]
             operands[1] = name_r[name_r.index(".")+1:]
@@ -150,9 +150,9 @@ class TextQuery(object):
         sub_expr = None
         operands = self._order_operands([lhs, rhs])
         if (op == '='):
-            sub_expr = (F(operands[0]) == F(operands[1]))
+            sub_expr = (relations.F(operands[0]) == relations.F(operands[1]))
         elif (op == '!='):
-            sub_expr = (F(operands[0]) != F(operands[1]))
+            sub_expr = (relations.F(operands[0]) != relations.F(operands[1]))
 
         return sub_expr
 
@@ -246,12 +246,12 @@ class TextQuery(object):
             else:
                 self._parsed_query[-1]["array"] = False
         else:
-            raise TextQueryCompileError("Unexpected query step action: {0}".format(tokens.step_action))
+            raise wqexception.TextQueryCompileError("Unexpected query step action: {0}".format(tokens.step_action))
 
         filter_string = tokens.source_filter_string if len(tokens.source_filter_string) > 0 else None
         data_source = self.data_source_builder(tokens.source_uri, filter_string)
         if (data_source is None):
-            raise TextQueryCompileError("Failed to build data source for {0}: builder failed".format(tokens.source_uri))
+            raise wqexception.TextQueryCompileError("Failed to build data source for {0}: builder failed".format(tokens.source_uri))
 
         self._parsed_query[-1]["source_uri"] = tokens.source_uri
         self._parsed_query[-1]["source_filter_string"] = filter_string
@@ -268,7 +268,7 @@ class TextQuery(object):
             try:
                 self._parsed_query[-1]["field_expression"] = self._transform_field_relations(self._parsed_query[-1]["relations"])[-1]
             except Exception as e:
-                raise TextQueryCompileError("Error transforming field relations: {0}".format(str(e)))
+                raise wqexception.TextQueryCompileError("Error transforming field relations: {0}".format(str(e)))
 
     def compile_query(self, query_string):
         """!
@@ -287,19 +287,19 @@ class TextQuery(object):
         try:
             self._parse(query_string)
         except ParseBaseException as e:
-            raise TextQueryCompileError("Parse error at col {0}: {1}".format(e.column, e.msg))
+            raise wqexception.TextQueryCompileError("Parse error at col {0}: {1}".format(e.column, e.msg))
 
         # Create a query object from the parse results
         result = None
         for parse_result in self._parsed_query:
             if (parse_result["type"] == TextQuery.STEP_TYPE_SEED):
                 if (result is not None):
-                    raise TextQueryCompileError("Unexpected seed query out of sequence")
+                    raise wqexception.TextQueryCompileError("Unexpected seed query out of sequence")
 
-                result = WeaveQ(parse_result["data_source"])
+                result = query.WeaveQ(parse_result["data_source"])
             else:
                 if (result is None):
-                    raise TextQueryCompileError("Unexpected non-seed query out of sequence")
+                    raise wqexception.TextQueryCompileError("Unexpected non-seed query out of sequence")
 
                 if (parse_result["type"] == TextQuery.STEP_TYPE_PIVOT):
                     result = result.pivot_to(parse_result["data_source"], parse_result["field_expression"])
