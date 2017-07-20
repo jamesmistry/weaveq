@@ -17,14 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from pyparsing import ParseResults, Keyword, CaselessKeyword, Word, alphanums, Optional, CaselessLiteral, Literal, QuotedString, infixNotation, ZeroOrMore, oneOf, OneOrMore, stringEnd, opAssoc, ParseBaseException, Group
+from __future__ import print_function, absolute_import
+import pyparsing
 import abc
 import copy
 
-import query
-import relations
-import query
-import wqexception
+import weaveq.query
+import weaveq.relations
+import weaveq.wqexception
 
 class DataSourceBuilder(object):
     """!
@@ -72,25 +72,25 @@ class TextQuery(object):
 
         @see weaveq.query.DataSource
         """
-        self._identifier = Word(alphanums + "_" + "." + "@" + "$" + "?")
-        self._string_literal = QuotedString('"', escChar='\\')
-        self._field_equality_op = oneOf("= !=")
-        self._field_relationship = Group(self._identifier - self._field_equality_op - self._identifier)
-        self._field_expr = infixNotation(self._field_relationship, [(Keyword("and"), 2, opAssoc.LEFT), (Keyword("or"), 2, opAssoc.LEFT),]).setResultsName("field_relations")
-        self._where_clause = Keyword("#where") - self._field_expr
-        self._filter_expr = QuotedString(quoteChar="|", escChar="\\")
-        self._source_spec = self._string_literal.setResultsName("source_uri") - Keyword("#as") - self._identifier.setResultsName("source_alias") - Optional(Keyword("#filter") - self._filter_expr.setResultsName("source_filter_string"))
-        self._pivot_clause = Keyword("#pivot-to").setResultsName("step_action") - self._source_spec - self._where_clause
-        self._join_options = (Keyword("#field-name") - self._identifier.setResultsName("field_name")) | Keyword("#exclude-empty").setResultsName("exclude_empty") | Keyword("#array").setResultsName("array")
-        self._join_clause = Keyword("#join-to").setResultsName("step_action") - self._source_spec - self._where_clause - ZeroOrMore(self._join_options)
+        self._identifier = pyparsing.Word(pyparsing.alphanums + "_" + "." + "@" + "$" + "?")
+        self._string_literal = pyparsing.QuotedString('"', escChar='\\')
+        self._field_equality_op = pyparsing.oneOf("= !=")
+        self._field_relationship = pyparsing.Group(self._identifier - self._field_equality_op - self._identifier)
+        self._field_expr = pyparsing.infixNotation(self._field_relationship, [(pyparsing.Keyword("and"), 2, pyparsing.opAssoc.LEFT), (pyparsing.Keyword("or"), 2, pyparsing.opAssoc.LEFT),]).setResultsName("field_relations")
+        self._where_clause = pyparsing.Keyword("#where") - self._field_expr
+        self._filter_expr = pyparsing.QuotedString(quoteChar="|", escChar="\\")
+        self._source_spec = self._string_literal.setResultsName("source_uri") - pyparsing.Keyword("#as") - self._identifier.setResultsName("source_alias") - pyparsing.Optional(pyparsing.Keyword("#filter") - self._filter_expr.setResultsName("source_filter_string"))
+        self._pivot_clause = pyparsing.Keyword("#pivot-to").setResultsName("step_action") - self._source_spec - self._where_clause
+        self._join_options = (pyparsing.Keyword("#field-name") - self._identifier.setResultsName("field_name")) | pyparsing.Keyword("#exclude-empty").setResultsName("exclude_empty") | pyparsing.Keyword("#array").setResultsName("array")
+        self._join_clause = pyparsing.Keyword("#join-to").setResultsName("step_action") - self._source_spec - self._where_clause - pyparsing.ZeroOrMore(self._join_options)
         self._process_clause = self._pivot_clause | self._join_clause
-        self._seed_clause = Keyword("#from").setResultsName("step_action") - self._source_spec
+        self._seed_clause = pyparsing.Keyword("#from").setResultsName("step_action") - self._source_spec
         
         self._seed_clause.setParseAction(self._create_step)
         self._pivot_clause.setParseAction(self._create_step)
         self._join_clause.setParseAction(self._create_step)
 
-        self._query = self._seed_clause - OneOrMore(self._process_clause)
+        self._query = self._seed_clause - pyparsing.OneOrMore(self._process_clause)
 
         self.data_source_builder = data_source_builder
 
@@ -114,23 +114,23 @@ class TextQuery(object):
         try:
             left_indx = self._source_by_alias[name_l[0:name_l.index(".")]]
         except KeyError:
-            raise wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_l))
+            raise weaveq.wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_l))
 
         try:
             right_indx = self._source_by_alias[name_r[0:name_r.index(".")]]
         except KeyError:
-            raise wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_r))
+            raise weaveq.wqexception.TextQueryCompileError("The alias {0} is not assigned to a source".format(name_r))
 
         if (left_indx == len(self._parsed_query) - 1):
             if (right_indx != len(self._parsed_query) - 2):
-                raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
+                raise weaveq.wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
 
             operands[0] = name_r[name_r.index(".")+1:]
             operands[1] = name_l[name_l.index(".")+1:]
         elif (left_indx != len(self._parsed_query) - 2):
-            raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_l))
+            raise weaveq.wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_l))
         elif (right_indx != len(self._parsed_query) - 1):
-            raise wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
+            raise weaveq.wqexception.TextQueryCompileError("The alias {0} is out of scope".format(name_r))
         else:
             operands[0] = name_l[name_l.index(".")+1:]
             operands[1] = name_r[name_r.index(".")+1:]
@@ -150,9 +150,9 @@ class TextQuery(object):
         sub_expr = None
         operands = self._order_operands([lhs, rhs])
         if (op == '='):
-            sub_expr = (relations.F(operands[0]) == relations.F(operands[1]))
+            sub_expr = (weaveq.relations.F(operands[0]) == weaveq.relations.F(operands[1]))
         elif (op == '!='):
-            sub_expr = (relations.F(operands[0]) != relations.F(operands[1]))
+            sub_expr = (weaveq.relations.F(operands[0]) != weaveq.relations.F(operands[1]))
 
         return sub_expr
 
@@ -168,7 +168,7 @@ class TextQuery(object):
         @see TextQuery.NODE_TYPE_COMPOUND
         @see TextQuery.NODE_TYPE_OPERATOR
         """
-        if ((len(node) == 3) and (isinstance(node, ParseResults))):
+        if ((len(node) == 3) and (isinstance(node, pyparsing.ParseResults))):
             if (isinstance(node[0], str) and isinstance(node[1], str) and isinstance(node[2], str)):
                 return TextQuery.NODE_TYPE_ATOM
             else:
@@ -246,12 +246,12 @@ class TextQuery(object):
             else:
                 self._parsed_query[-1]["array"] = False
         else:
-            raise wqexception.TextQueryCompileError("Unexpected query step action: {0}".format(tokens.step_action))
+            raise weaveq.wqexception.TextQueryCompileError("Unexpected query step action: {0}".format(tokens.step_action))
 
         filter_string = tokens.source_filter_string if len(tokens.source_filter_string) > 0 else None
         data_source = self.data_source_builder(tokens.source_uri, filter_string)
         if (data_source is None):
-            raise wqexception.TextQueryCompileError("Failed to build data source for {0}: builder failed".format(tokens.source_uri))
+            raise weaveq.wqexception.TextQueryCompileError("Failed to build data source for {0}: builder failed".format(tokens.source_uri))
 
         self._parsed_query[-1]["source_uri"] = tokens.source_uri
         self._parsed_query[-1]["source_filter_string"] = filter_string
@@ -268,7 +268,7 @@ class TextQuery(object):
             try:
                 self._parsed_query[-1]["field_expression"] = self._transform_field_relations(self._parsed_query[-1]["relations"])[-1]
             except Exception as e:
-                raise wqexception.TextQueryCompileError("Error transforming field relations: {0}".format(str(e)))
+                raise weaveq.wqexception.TextQueryCompileError("Error transforming field relations: {0}".format(str(e)))
 
     def compile_query(self, query_string):
         """!
@@ -286,20 +286,20 @@ class TextQuery(object):
 
         try:
             self._parse(query_string)
-        except ParseBaseException as e:
-            raise wqexception.TextQueryCompileError("Parse error at col {0}: {1}".format(e.column, e.msg))
+        except pyparsing.ParseBaseException as e:
+            raise weaveq.wqexception.TextQueryCompileError("Parse error at col {0}: {1}".format(e.column, e.msg))
 
         # Create a query object from the parse results
         result = None
         for parse_result in self._parsed_query:
             if (parse_result["type"] == TextQuery.STEP_TYPE_SEED):
                 if (result is not None):
-                    raise wqexception.TextQueryCompileError("Unexpected seed query out of sequence")
+                    raise weaveq.wqexception.TextQueryCompileError("Unexpected seed query out of sequence")
 
-                result = query.WeaveQ(parse_result["data_source"])
+                result = weaveq.query.WeaveQ(parse_result["data_source"])
             else:
                 if (result is None):
-                    raise wqexception.TextQueryCompileError("Unexpected non-seed query out of sequence")
+                    raise weaveq.wqexception.TextQueryCompileError("Unexpected non-seed query out of sequence")
 
                 if (parse_result["type"] == TextQuery.STEP_TYPE_PIVOT):
                     result = result.pivot_to(parse_result["data_source"], parse_result["field_expression"])
@@ -309,5 +309,5 @@ class TextQuery(object):
         return result
 
     def _parse(self, query_string):
-        (self._query + stringEnd).parseString(query_string)
+        (self._query + pyparsing.stringEnd).parseString(query_string)
 

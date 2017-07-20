@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+from __future__ import print_function, absolute_import
 import inspect
 import sys
 import abc
@@ -25,10 +26,11 @@ import csv
 import collections
 import elasticsearch
 import elasticsearch_dsl
+import six
 
-import parser
-import query
-import wqexception
+import weaveq.parser
+import weaveq.query
+import weaveq.wqexception
 
 class DiscoverableDataSource(object):
     """!
@@ -36,7 +38,7 @@ class DiscoverableDataSource(object):
     """
     pass
 
-class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
+class JsonLinesDataSource(weaveq.query.DataSource, DiscoverableDataSource):
     """!
     @brief Data source for files containing records in "JSON lines" format.
 
@@ -55,10 +57,10 @@ class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
         super(JsonLinesDataSource, self).__init__(filename, filter_string)
 
         if (config is not None):
-            raise wqexception.DataSourceBuildError("The json_lines data source type does not currently support any configuration parameters.")
+            raise weaveq.wqexception.DataSourceBuildError("The json_lines data source type does not currently support any configuration parameters.")
 
         if (filter_string is not None):
-            raise wqexception.DataSourceBuildError("The json_lines data source type does not currently support the #filter statement.")
+            raise weaveq.wqexception.DataSourceBuildError("The json_lines data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -97,7 +99,7 @@ class JsonLinesDataSource(query.DataSource, DiscoverableDataSource):
         for record in self._load_json_lines():
             yield record
 
-class JsonDataSource(query.DataSource, DiscoverableDataSource):
+class JsonDataSource(weaveq.query.DataSource, DiscoverableDataSource):
     """!
     @brief Data source for files containing records in JSON format.
 
@@ -116,10 +118,10 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
         super(JsonDataSource, self).__init__(filename, filter_string)
 
         if (config is not None):
-            raise wqexception.DataSourceBuildError("The json data source type does not currently support any configuration parameters.")
+            raise weaveq.wqexception.DataSourceBuildError("The json data source type does not currently support any configuration parameters.")
 
         if (filter_string is not None):
-            raise wqexception.DataSourceBuildError("The json data source type does not currently support the #filter statement.")
+            raise weaveq.wqexception.DataSourceBuildError("The json data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -140,7 +142,7 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
             json_doc = json.load(json_file, object_pairs_hook=collections.OrderedDict)
 
         if (not isinstance(json_doc, list)):
-            raise wqexception.DataSourceError("The json data source requires that JSON documents contain lists as their root elements")
+            raise weaveq.wqexception.DataSourceError("The json data source requires that JSON documents contain lists as their root elements")
 
         return json_doc
 
@@ -159,7 +161,7 @@ class JsonDataSource(query.DataSource, DiscoverableDataSource):
             if (isinstance(el, object)):
                 yield el
 
-class CsvDataSource(query.DataSource, DiscoverableDataSource):
+class CsvDataSource(weaveq.query.DataSource, DiscoverableDataSource):
     """!
     @brief Data source for files containing records in CSV format.
 
@@ -179,10 +181,10 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
         super(CsvDataSource, self).__init__(filename, filter_string)
 
         if (config is None):
-            raise wqexception.DataSourceBuildError("The csv data source type requires configuration parameters to be supplied.")
+            raise weaveq.wqexception.DataSourceBuildError("The csv data source type requires configuration parameters to be supplied.")
 
         if (filter_string is not None):
-            raise wqexception.DataSourceBuildError("The csv data source type does not currently support the #filter statement.")
+            raise weaveq.wqexception.DataSourceBuildError("The csv data source type does not currently support the #filter statement.")
 
         ## @var filename
         # Filename of the data source file
@@ -203,14 +205,14 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
 
     def _load_csv(self):
         csv_doc = None
-        with open(self.filename, "rb") as csv_file:
+        with open(self.filename, "r") as csv_file:
             csv_doc = csv.reader(csv_file)
             row_index = 0
             field_names = []
             for row in csv_doc:
                 if ((self.first_row_field_names) and (row_index == 0)):
                     for column in row:
-                        field_names.append(unicode(column, "utf-8"))
+                        field_names.append(six.text_type(column) if sys.version_info.major >= 3 else unicode(column, encoding="utf-8"))
                 else:
                     column_index = 0
                     record = collections.OrderedDict()
@@ -221,7 +223,10 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
                         else:
                             column_name = u"column_{0}".format(column_index + 1)
 
-                        record[column_name] = unicode(column, "utf-8")
+                        if (sys.version_info.major >= 3):
+                            record[column_name] = six.text_type(column)
+                        else:
+                            record[column_name] = unicode(column, encoding="utf-8")
                         column_index += 1
 
                     yield record
@@ -246,7 +251,7 @@ class CsvDataSource(query.DataSource, DiscoverableDataSource):
         for row in self._load_csv():
             yield row
 
-class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
+class ElasticsearchDataSource(weaveq.query.DataSource, DiscoverableDataSource):
     """!
     Data source for resultsets from Elasticsearch queries expressed in Query String Query syntax.
     """
@@ -262,7 +267,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
         super(ElasticsearchDataSource, self).__init__(index_name, filter_string)
 
         if (config is None):
-            raise wqexception.DataSourceBuildError("The elasticsearch data source type requires configuration parameters to be supplied.")
+            raise weaveq.wqexception.DataSourceBuildError("The elasticsearch data source type requires configuration parameters to be supplied.")
 
         ## @var index_name
         # Name of the target Elasticsearch index
@@ -279,7 +284,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
 
     def _validate_config(self, config):
         if ("hosts" not in config):
-            raise wqexception.DataSourceBuildError("'hosts' is a required element in the Elasticsearch data source configuration.")
+            raise weaveq.wqexception.DataSourceBuildError("'hosts' is a required element in the Elasticsearch data source configuration.")
         if ("timeout" not in config):
             config["timeout"] = 10
         if ("use_ssl" not in config):
@@ -322,7 +327,7 @@ class ElasticsearchDataSource(query.DataSource, DiscoverableDataSource):
         for hit in self._elastic_source.scan():
             yield hit.to_dict()
 
-class AppDataSourceBuilder(parser.DataSourceBuilder):
+class AppDataSourceBuilder(weaveq.parser.DataSourceBuilder):
     """!
     Builds data sources for the WeaveQ application.
     """
@@ -360,7 +365,7 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
 
         type_delim = source_uri.find(":")
         if (type_delim == -1):
-            raise wqexception.DataSourceBuildError("A data source type must be specified in the format '<source type>:<source URI>'. For example: json_lines:/path/to/file")
+            raise weaveq.wqexception.DataSourceBuildError("A data source type must be specified in the format '<source type>:<source URI>'. For example: json_lines:/path/to/file")
         else:
             return_val["uri"] = source_uri[type_delim+1:]
             return_val["source_type"] = source_uri[0:type_delim].lower()
@@ -371,7 +376,7 @@ class AppDataSourceBuilder(parser.DataSourceBuilder):
                 # This is so that config keys can be reliably mapped to ident strings
                 return_val["source_type"] = return_val["data_source_class"].string_idents()[0]
             except KeyError:
-                raise wqexception.DataSourceBuildError("The data source type specified, '{0}', is not valid. Valid data source types are: {1}".format(return_val["source_type"], self.valid_source_types))
+                raise weaveq.wqexception.DataSourceBuildError("The data source type specified, '{0}', is not valid. Valid data source types are: {1}".format(return_val["source_type"], self.valid_source_types))
             
             return return_val
 

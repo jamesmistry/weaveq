@@ -17,16 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from __future__ import print_function
-from elasticsearch import Elasticsearch
-from elasticsearch import ElasticsearchException
-from elasticsearch_dsl import Search
+from __future__ import print_function, absolute_import
+import six
 import copy
 import logging
 import sys
 import abc
 
-import relations
+import weaveq.relations
 
 class DataSource(object):
     """!
@@ -217,8 +215,10 @@ class NestedField(object):
         if (self._value is None):
 
             try:
-                self._value = reduce(get_level, self.field.split("."), self.obj)
-            except KeyError, TypeError:
+                self._value = six.moves.reduce(get_level, self.field.split("."), self.obj)
+            except KeyError:
+                return False
+            except TypeError:
                 return False
 
         return True
@@ -267,12 +267,12 @@ class IndexResultHandler(object):
         @param handler_output object: The object index
         """
         if (len(handler_output) == 0):
-            for cond_group_index in xrange(len(self.index_conditions)):
-                handler_output.append({relations.F.OP_EQ : {}, relations.F.OP_NE : {}})
+            for cond_group_index in six.moves.range(len(self.index_conditions)):
+                handler_output.append({weaveq.relations.F.OP_EQ : {}, weaveq.relations.F.OP_NE : {}})
 
         cond_group_index = 0
         for cond_group in self.index_conditions:
-            result_keys = {relations.F.OP_EQ : [], relations.F.OP_NE : []}
+            result_keys = {weaveq.relations.F.OP_EQ : [], weaveq.relations.F.OP_NE : []}
             cond_count = 0
             for cond in cond_group:
                 field = NestedField(result, cond.left_field)
@@ -287,20 +287,20 @@ class IndexResultHandler(object):
 
             if (cond_count == len(cond_group)):
                 self._hit_group_count += 1 # The object satisfies the condition group field dependencies
-                index_key_eq = tuple(result_keys[relations.F.OP_EQ])
+                index_key_eq = tuple(result_keys[weaveq.relations.F.OP_EQ])
 
                 if (len(index_key_eq) > 0):
-                    if (index_key_eq not in handler_output[cond_group_index][relations.F.OP_EQ]):
-                        handler_output[cond_group_index][relations.F.OP_EQ][index_key_eq] = []
+                    if (index_key_eq not in handler_output[cond_group_index][weaveq.relations.F.OP_EQ]):
+                        handler_output[cond_group_index][weaveq.relations.F.OP_EQ][index_key_eq] = []
 
-                    handler_output[cond_group_index][relations.F.OP_EQ][index_key_eq].append(result)
+                    handler_output[cond_group_index][weaveq.relations.F.OP_EQ][index_key_eq].append(result)
 
-                index_keys_ne = result_keys[relations.F.OP_NE]
+                index_keys_ne = result_keys[weaveq.relations.F.OP_NE]
                 for index_key_ne in index_keys_ne:
-                    if (index_key_ne not in handler_output[cond_group_index][relations.F.OP_NE]):
-                        handler_output[cond_group_index][relations.F.OP_NE][index_key_ne] = []
+                    if (index_key_ne not in handler_output[cond_group_index][weaveq.relations.F.OP_NE]):
+                        handler_output[cond_group_index][weaveq.relations.F.OP_NE][index_key_ne] = []
 
-                    handler_output[cond_group_index][relations.F.OP_NE][index_key_ne].append(result)
+                    handler_output[cond_group_index][weaveq.relations.F.OP_NE][index_key_ne].append(result)
                 
             cond_group_index += 1
 
@@ -398,7 +398,7 @@ class WeaveQ(object):
 
         @return A WeaveQ object representing the query so far
         """
-        target_conds = relations.TargetConditions(rel.tree)
+        target_conds = weaveq.relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
         self._instructions.append({"op":WeaveQ.OP_JOIN, "exclude_empty_matches":exclude_empty_joins, "field":field, "array":array, "conditions":target_conds, "q":data_source, "conjunctions":[]})
         return self
@@ -412,7 +412,7 @@ class WeaveQ(object):
 
         @return A WeaveQ object representing the query so far
         """
-        target_conds = relations.TargetConditions(rel.tree)
+        target_conds = weaveq.relations.TargetConditions(rel.tree)
         self._instructions[-1]["conjunctions"] = target_conds.conjunctions
         self._instructions.append({"op":WeaveQ.OP_PIVOT, "conditions":target_conds, "q":data_source, "conjunctions":[]})
         return self
@@ -451,10 +451,10 @@ class WeaveQ(object):
                         field = NestedField(result, cond.right_field)
                         if (field.exists()):
                             filter_key = (cond_count, cond.rhs_proxy(cond.right_field, field.value()))
-                            if (cond.op == relations.F.OP_EQ):
+                            if (cond.op == weaveq.relations.F.OP_EQ):
                                 filter_keys_eq.append(filter_key)
                                 cond_count += 1
-                            elif (cond.op == relations.F.OP_NE):
+                            elif (cond.op == weaveq.relations.F.OP_NE):
                                 filter_keys_ne.append(filter_key)
                                 cond_count += 1
                         else:
@@ -466,7 +466,7 @@ class WeaveQ(object):
 
                         eq_matches = None
                         try:
-                            eq_matches = self._results[-2][cond_group_index][relations.F.OP_EQ][filter_key_eq]
+                            eq_matches = self._results[-2][cond_group_index][weaveq.relations.F.OP_EQ][filter_key_eq]
                         except KeyError:
                             eq_matches = []
 
@@ -475,7 +475,7 @@ class WeaveQ(object):
                         ne_matches = []
                         for filter_key_ne in filter_keys_ne:
                             try:
-                                filter_matches = self._results[-2][cond_group_index][relations.F.OP_NE][tuple(filter_key_ne)]
+                                filter_matches = self._results[-2][cond_group_index][weaveq.relations.F.OP_NE][tuple(filter_key_ne)]
                                 for filter_match in filter_matches:
                                     ne_matches.append(filter_match)
                                     if (match_callback is None):
@@ -521,7 +521,7 @@ class WeaveQ(object):
                                     eq_ne_index[cond_group_index] = {}
                                     index_ne(ne_matches, eq_ne_index[cond_group_index])
 
-                                for possible_match_key, possible_match_array in self._results[-2][cond_group_index][relations.F.OP_NE].iteritems():
+                                for possible_match_key, possible_match_array in six.iteritems(self._results[-2][cond_group_index][weaveq.relations.F.OP_NE]):
                                     for match_value in possible_match_array:
                                         if (id(match_value) not in eq_ne_index[cond_group_index]):
                                             match_callback(instr, result, match_value)
@@ -617,8 +617,6 @@ class WeaveQ(object):
 
         try:
             response = self._process_response(instr, ScrollShim(instr["q"].stream()) if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
-        except ElasticsearchException as e:
-            raise
         except Exception as e:
             raise
 

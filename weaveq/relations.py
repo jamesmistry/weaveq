@@ -17,11 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+from __future__ import absolute_import
 import copy
 
-import wqexception
+import six
+import weaveq.wqexception
 
-class FieldMustBeRelated(wqexception.WeaveQError):
+class FieldMustBeRelated(weaveq.wqexception.WeaveQError):
     """!
     Thrown when only a field object is provided when an expression of the form [field] [operator] [field] is expected
     """
@@ -31,7 +33,7 @@ class FieldMustBeRelated(wqexception.WeaveQError):
         """
         super(FieldMustBeRelated, self).__init__("Each left-hand field specified must be related to a right-hand field by a comparison operator. For example, F(leftField) == F(rightField) instead of F(leftField)")
 
-class FieldRelationshipNotInParentheses(wqexception.WeaveQError):
+class FieldRelationshipNotInParentheses(weaveq.wqexception.WeaveQError):
     """!
     Thrown when there's ambiguity caused by a field relationship not being enclosed in parentheses
 
@@ -393,7 +395,7 @@ class TargetConditions(object):
 
             self.conjunctions.append(current_conj)
 
-            for field, count in field_counts.iteritems():
+            for field, count in six.iteritems(field_counts):
                 if (count >= len(leaves)):
                     self.rhs_dependencies.append(field)
 
