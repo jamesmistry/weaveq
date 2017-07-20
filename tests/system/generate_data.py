@@ -2,6 +2,7 @@
 
 import random
 import json
+import six
 
 class TestRecord(object):
     def __init__(self, collection, num_keys = 1):
@@ -15,7 +16,7 @@ class TestRecord(object):
         self.rec = {}
         self.keys = []
 
-        for key_index in xrange(num_keys):
+        for key_index in six.moves.range(num_keys):
             this_key = "keydata_{0}".format(key_index)
             this_key_name = "key_{0}_{1}".format(collection.index, key_index)
             self.rec[this_key_name] = this_key
@@ -38,7 +39,7 @@ class TestCollection(object):
         self.index = index
         self.recs = []
 
-        for record_index in xrange(size):
+        for record_index in six.moves.range(size):
             self.recs.append(TestRecord(self, (record_index % 3) + 1).rec)
 
         random.shuffle(self.recs)

@@ -5,6 +5,7 @@ import logging
 import string
 import sys
 import time
+import six
 
 from weaveq.query import WeaveQ
 from weaveq.relations import F
@@ -27,6 +28,9 @@ class TestResults(object):
 
     def __iter__(self):
         return self
+
+    def __next__(self):
+        return self.next()
 
     def next(self):
         if (self._cursor < self._size):
@@ -123,7 +127,7 @@ def run_tc(name, logic, sizes):
 
     test_results = []
 
-    for num in xrange(3):
+    for num in six.moves.range(3):
         test_results.append(logic(sizes))
         print("Run {0}: {1} second(s)".format(num + 1, test_results[-1]))
 

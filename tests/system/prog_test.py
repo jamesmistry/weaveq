@@ -7,13 +7,14 @@ import subprocess
 import unittest
 import collections
 import tempfile
+import six
 
 class AppRunner(object):
     def __init__(self):
         self.results = []
         self.exit_code = None
 
-    def run(self, query, stdin = False, config_file = None):
+    def run(self, query, config_file = None):
         app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
         cmd = []
@@ -22,12 +23,11 @@ class AppRunner(object):
         else:
             cmd = ["python", os.path.join(app_path, "weaveq"), "-c", config_file]
 
-        if (not stdin):
-            cmd.append("-q")
-            cmd.append(query)
+        cmd.append("-q")
+        cmd.append(query)
 
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE if stdin else None, stdout=subprocess.PIPE)
-        output = p.communicate(input=query if stdin else None)[0]
+        p = subprocess.Popen(cmd, stdin=None, stdout=subprocess.PIPE, stderr=None, universal_newlines=True)
+        output = p.communicate(input=None)[0]
         for output_line in output.strip().split("\n"):
             output_line = output_line.strip()
             self.results.append(output_line)
@@ -47,7 +47,7 @@ class AppRunner(object):
         expected.sort()
         self.results.sort()
 
-        for index in xrange(len(expected) - 1):
+        for index in six.moves.range(len(expected) - 1):
             if ((index >= len(expected)) or (index >= len(self.results))):
                 break
 
@@ -112,13 +112,5 @@ class TestProg(unittest.TestCase):
             self.assertEquals(runner.exit_code, 1)
         finally:
             os.unlink(config[1])
-
-    def test_stdin_query(self):
-        runner = AppRunner()
-        runner.run('#from "csv:{0}" #as ips #pivot-to "jsl:{1}" #as flows #where ips.ip = flows.src_ip or ips.ip = flows.dest_ip'.format(os.path.join(TestProg.data_path(), "iplist.csv"), os.path.join(TestProg.data_path(), "eve-flow.jsonlines")), stdin = True)
-        self.assertEquals(runner.exit_code, 0)
-
-        expected = TestProg.load_expected("pivot_query")
-        self.assertTrue(runner.check_results(expected))
 
 
