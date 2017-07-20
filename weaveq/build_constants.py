@@ -13,7 +13,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+from __future__ import print_function, absolute_import
+
 config_doc_url = "https://readthedocs.org/projects/weaveq/"
+project_url = "http://github.com/jamesmistry/weaveq"
 major_version = "0"
 minor_version = "1"
 release_version = "0"
