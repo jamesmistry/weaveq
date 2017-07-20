@@ -157,37 +157,13 @@ class TestApp(unittest.TestCase):
             config_file.write("{}")
 
         with self.assertRaises(wqexception.ConfigurationError):
-            subject = App(mock_args=["-c", self._config_file[1]])
+            subject = App(mock_args=["-c", self._config_file[1], "-q", "dummy query"])
 
     def test_config_valid_explicit_query_string(self):
         with open(self._config_file[1], "w") as config_file:
             config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":true}}}')
 
         subject = App(mock_args=["-c", self._config_file[1], "-q", "placeholder_query_string"])
-        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
-        self.assertEquals(subject._query_string, "placeholder_query_string")
-        self.assertEquals(subject._output_file, subject._stdout)
-
-    def test_query_string_omitted(self):
-        with open(self._config_file[1], "w") as config_file:
-            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":true}}}')
-
-        with open(self._mock_stdin[1], "w") as mock_stdin:
-            mock_stdin.write('placeholder_query_string')
-
-        subject = App(mock_args=["-c", self._config_file[1]], mock_stdin=self._mock_stdin[1])
-        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
-        self.assertEquals(subject._query_string, "placeholder_query_string")
-        self.assertEquals(subject._output_file, subject._stdout)
-
-    def test_query_string_dash(self):
-        with open(self._config_file[1], "w") as config_file:
-            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":true}}}')
-
-        with open(self._mock_stdin[1], "w") as mock_stdin:
-            mock_stdin.write('placeholder_query_string')
-
-        subject = App(mock_args=["-c", self._config_file[1], "-q", "-"], mock_stdin=self._mock_stdin[1])
         self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
         self.assertEquals(subject._query_string, "placeholder_query_string")
         self.assertEquals(subject._output_file, subject._stdout)
