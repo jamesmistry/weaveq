@@ -148,4 +148,7 @@ class TestTargetConditions(unittest.TestCase):
         branch.add_child(ConditionNode(None, "f7", F.OP_NE, "f4", "n5"))
 
         conds = TargetConditions(subject)
-        self.assertEqual(conds.rhs_dependencies, ["f2", "f4"])
+        conds.rhs_dependencies.sort()
+        expected = ["f2", "f4"]
+        expected.sort()
+        self.assertEqual(conds.rhs_dependencies, expected)
