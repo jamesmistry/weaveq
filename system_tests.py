@@ -16,6 +16,3 @@ if __name__ == "__main__":
     testsuite = unittest.TestLoader().discover("{0}/tests/system".format(scriptDir), pattern="*_test.py")
     unittest.TextTestRunner(verbosity=1).run(testsuite)
 
-    if (not tests.system.perf_test.run()):
-        sys.exit(1)
-
