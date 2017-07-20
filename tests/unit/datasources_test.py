@@ -9,6 +9,7 @@ import tempfile
 import json
 import os
 import types
+import sys
 
 from weaveq.datasources import AppDataSourceBuilder, JsonLinesDataSource, JsonDataSource, CsvDataSource, ElasticsearchDataSource
 from weaveq import wqexception
@@ -117,8 +118,11 @@ class TestConfig(unittest.TestCase):
 
         test_data = '{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"}\n{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"}\n{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonLinesDataSource(tmpfile[1], None)
@@ -133,8 +137,11 @@ class TestConfig(unittest.TestCase):
 
         test_data = '{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"}\n{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"}\n{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             result = []
@@ -152,8 +159,11 @@ class TestConfig(unittest.TestCase):
 
         test_data = '{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"}\n{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"}\n{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             result = []
@@ -170,8 +180,11 @@ class TestConfig(unittest.TestCase):
 
         test_data = u'{"กว่า":"κόσμε", "test_field_2a":"test_value_2a"}\n{"test_field_1b":"いろはにほへとちりぬるを", "Heizölrückstoßabdämpfung":"test_value_2b"}\n{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}'.encode("utf-8")
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(test_data)
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonLinesDataSource(tmpfile[1], None)
@@ -185,8 +198,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '[{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"},{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"},{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}]'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonDataSource(tmpfile[1], None)
@@ -200,8 +216,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '[{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"},{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"},{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}]'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonDataSource(tmpfile[1], None)
@@ -219,8 +238,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '{"a":{"test_field_1a":"test_value_1a", "test_field_2a":"test_value_2a"},"b":{"test_field_1b":"test_value_1b", "test_field_2b":"test_value_2b"},"c":{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}}'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonDataSource(tmpfile[1], None)
@@ -236,8 +258,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = u'[{"กว่า":"κόσμε", "test_field_2a":"test_value_2a"},{"test_field_1b":"いろはにほへとちりぬるを", "Heizölrückstoßabdämpfung":"test_value_2b"},{"test_field_1c":"test_value_1c", "test_field_2c":"test_value_2c"}]'.encode("utf-8")
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(test_data)
+            else:
+                config_file.write(test_data)
 
         try:
             subject = JsonDataSource(tmpfile[1], None)
@@ -251,8 +276,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '"field_a","field_b","field_c"\n"row0cola","row0colb","row0colc"\n"row1cola","row1colb","row1colc"\n"row2cola","row2colb","row2colc"\n'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})
@@ -266,8 +294,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '"field_a","field_b","field_c"\n"row0cola","row0colb","row0colc"\n"row1cola","row1colb","row1colc"\n"row2cola","row2colb","row2colc"\n'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})
@@ -285,8 +316,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = '"row0cola","row0colb","row0colc"\n"row1cola","row1colb","row1colc"\n"row2cola","row2colb","row2colc"\n'
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(bytes(test_data, "utf-8"))
+            else:
+                config_file.write(test_data)
 
         try:
             subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":False})
@@ -300,8 +334,11 @@ class TestConfig(unittest.TestCase):
         """
         test_data = u'"กว่า","áðan","τὴν"\n"κόσμε","row0colb","row0colc"\n"row1cola","Heizölrückstoßabdämpfung","row1colc"\n"row2cola","row2colb","いろはにほへとちりぬるを"\n'.encode("utf-8")
         tmpfile = tempfile.mkstemp()
-        with open(tmpfile[1], "w") as config_file:
-            config_file.write(test_data)
+        with open(tmpfile[1], "wb") as config_file:
+            if (sys.version_info.major >= 3):
+                config_file.write(test_data)
+            else:
+                config_file.write(test_data)
 
         try:
             subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})

@@ -4,6 +4,7 @@ Tests for weaveq.query
 
 import unittest
 import logging
+import operator
 
 from weaveq.query import IndexResultHandler
 from weaveq.query import NestedField
@@ -541,7 +542,7 @@ class TestWeaveQ(unittest.TestCase):
         s = WeaveQ(q1).join_to(q2, (F("id") != F("name_id")), field="custom_field_name", array=True)
         s.result_handler(r)
         s.execute(stream=False)
-        r.results[0]["custom_field_name"].sort()
+        r.results[0]["custom_field_name"] = sorted(r.results[0]["custom_field_name"], key=operator.itemgetter("id"))
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":2,"name":"a"},{"id":3,"name":"c"},{"id":4,"name":"f"}]}])
 
     def test_join_array_eq(self):
@@ -553,7 +554,7 @@ class TestWeaveQ(unittest.TestCase):
         s = WeaveQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True)
         s.result_handler(r)
         s.execute(stream=False)
-        r.results[0]["custom_field_name"].sort()
+        r.results[0]["custom_field_name"] = sorted(r.results[0]["custom_field_name"], key=operator.itemgetter("name"))
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]}])
 
     def test_join_array_ne_and_eq(self):
@@ -565,7 +566,7 @@ class TestWeaveQ(unittest.TestCase):
         s = WeaveQ(q1).join_to(q2, (F("id") != F("name_id")) & (F("name") == F("type")), field="custom_field_name", array=True)
         s.result_handler(r)
         s.execute(stream=False)
-        r.results[0]["custom_field_name"].sort()
+        r.results[0]["custom_field_name"] = sorted(r.results[0]["custom_field_name"], key=operator.itemgetter("id"))
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":2,"name":"a"},{"id":3,"name":"a"}]}])
 
     def test_join_array_include_empties(self):
@@ -577,7 +578,7 @@ class TestWeaveQ(unittest.TestCase):
         s = WeaveQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True, exclude_empty_joins=False)
         s.result_handler(r)
         s.execute(stream=False)
-        r.results[0]["custom_field_name"].sort()
+        r.results[0]["custom_field_name"] = sorted(r.results[0]["custom_field_name"], key=operator.itemgetter("name"))
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]},{"name_id":99,"type":"a"}])
 
     def test_join_array_exclude_empties(self):
@@ -589,7 +590,7 @@ class TestWeaveQ(unittest.TestCase):
         s = WeaveQ(q1).join_to(q2, (F("id") == F("name_id")), field="custom_field_name", array=True, exclude_empty_joins=True)
         s.result_handler(r)
         s.execute(stream=False)
-        r.results[0]["custom_field_name"].sort()
+        r.results[0]["custom_field_name"] = sorted(r.results[0]["custom_field_name"], key=operator.itemgetter("name"))
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":[{"id":1,"name":"a"},{"id":1,"name":"b"},{"id":1,"name":"c"}]}])
 
     def test_join_no_array_include_empties(self):
@@ -711,7 +712,8 @@ class TestWeaveQ(unittest.TestCase):
         s.result_handler(r)
         s.execute(stream=False)
 
-        self.assertEqual(r.results, [{"id":2,"record":"record_c"},{"id":2,"record":"record_b"}])
+        r.results = sorted(r.results, key=operator.itemgetter("record"))
+        self.assertEqual(r.results, [{"id":2,"record":"record_b"},{"id":2,"record":"record_c"}])
 
     def test_query_as_str(self):
         q1 = MockDataSource([[{'id':1,'name':'record_a'},{'id':2,'name':'record_b'},{'id':3,'name':'record_c'},{'id':4,'name':'record_b'}]])
