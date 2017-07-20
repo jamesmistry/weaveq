@@ -17,19 +17,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import json
 import argparse
 import types
 import sys
+import six
 
-import build_constants
-import wqexception
-import parser
-import query
-import datasources
+import weaveq.build_constants
+import weaveq.wqexception
+import weaveq.parser
+import weaveq.query
+import weaveq.datasources
 
-class FileOutputResultHandler(query.ResultHandler):
+class FileOutputResultHandler(weaveq.query.ResultHandler):
     def __init__(self, file_object):
         """!
         Constructor.
@@ -66,7 +67,7 @@ class Config(object):
                 with open(config_filename) as config_file:
                     config_data = json.load(config_file)
             except (OSError, IOError) as e:
-                raise wqexception.ConfigurationError("Problem reading file: {0}".format(str(e)))
+                raise weaveq.wqexception.ConfigurationError("Problem reading file: {0}".format(str(e)))
 
             self.apply_config(config_data)
 
@@ -77,20 +78,20 @@ class Config(object):
         for el in path_elements:
             path_so_far = "{0}{1}{2}".format(path_so_far, "/" if (len(path_so_far) > 0) else "", el)
             if (el not in cur_obj):
-                raise wqexception.ConfigurationError("Missing '{0}' configuration item (configuration file format is documented at {1})".format(path_so_far, build_constants.config_doc_url))
+                raise weaveq.wqexception.ConfigurationError("Missing '{0}' configuration item (configuration file format is documented at {1})".format(path_so_far, weaveq.build_constants.config_doc_url))
             
             cur_obj = cur_obj[el]
 
         if (not isinstance(cur_obj, required_type)):
-            raise wqexception.ConfigurationError("'{0}' configuration item must be of type {1} (configuration file format is documented at {2})".format(item_path, str(required_type), build_constants.config_doc_url))
+            raise weaveq.wqexception.ConfigurationError("'{0}' configuration item must be of type {1} (configuration file format is documented at {2})".format(item_path, str(required_type), weaveq.build_constants.config_doc_url))
 
         if (min_len is not None):
             if (len(cur_obj) < min_len):
-                raise wqexception.ConfigurationError("'{0}' configuration item must contain a minimum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, min_len, len(cur_obj), build_constants.config_doc_url))
+                raise weaveq.wqexception.ConfigurationError("'{0}' configuration item must contain a minimum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, min_len, len(cur_obj), weaveq.build_constants.config_doc_url))
 
         if (max_len is not None):
             if (len(cur_obj) > max_len):
-                raise wqexception.ConfigurationError("'{0}' configuration item must contain a maximum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, max_len, len(cur_obj), build_constants.config_doc_url))
+                raise weaveq.wqexception.ConfigurationError("'{0}' configuration item must contain a maximum of {1} element(s), but there are {2} specified (configuration file format is documented at {3})".format(item_path, max_len, len(cur_obj), weaveq.build_constants.config_doc_url))
 
     def apply_config(self, config_data):
         self._validate_item(config_data, "data_sources", dict, 2, 2)
@@ -98,8 +99,8 @@ class Config(object):
         self._validate_item(config_data, "data_sources/elasticsearch/hosts", list, 1)
 
         for host in config_data["data_sources"]["elasticsearch"]["hosts"]:
-            if (not isinstance(host, types.StringTypes)):
-                raise wqexception.ConfigurationError("Invalid Elasticsearch host specified: host items must be strings, not {0}".format(str(type(host))))
+            if (not isinstance(host, six.string_types)):
+                raise weaveq.wqexception.ConfigurationError("Invalid Elasticsearch host specified: host items must be strings, not {0}".format(str(type(host))))
 
         if ("timeout" not in config_data["data_sources"]["elasticsearch"]):
             config_data["data_sources"]["elasticsearch"]["timeout"] = 10
@@ -119,17 +120,17 @@ class Config(object):
         if ("ca_certs" not in config_data["data_sources"]["elasticsearch"]):
             config_data["data_sources"]["elasticsearch"]["ca_certs"] = None
         else:
-            self._validate_item(config_data, "data_sources/elasticsearch/ca_certs", types.StringTypes)
+            self._validate_item(config_data, "data_sources/elasticsearch/ca_certs", six.string_types)
 
         if ("client_cert" not in config_data["data_sources"]["elasticsearch"]):
             config_data["data_sources"]["elasticsearch"]["client_cert"] = None
         else:
-            self._validate_item(config_data, "data_sources/elasticsearch/client_cert", types.StringTypes)
+            self._validate_item(config_data, "data_sources/elasticsearch/client_cert", six.string_types)
 
         if ("client_key" not in config_data["data_sources"]["elasticsearch"]):
             config_data["data_sources"]["elasticsearch"]["client_key"] = None
         else:
-            self._validate_item(config_data, "data_sources/elasticsearch/client_key", types.StringTypes)
+            self._validate_item(config_data, "data_sources/elasticsearch/client_key", six.string_types)
 
         self._validate_item(config_data, "data_sources/csv", dict)
         self._validate_item(config_data, "data_sources/csv/first_row_contains_field_names", bool)
@@ -157,11 +158,11 @@ class App(object):
         else:
             self._stdout = sys.stdout
 
-        arg_parser = argparse.ArgumentParser(prog="weaveq", description="Runs pivot and join queries across collections of data with support for various data sources, including Elasticsearch and JSON.")
-        arg_parser.add_argument("-c", "--config", help="path to the configuration file. Its format is documented at {0}".format(build_constants.config_doc_url), required=False)
-        arg_parser.add_argument("-q", "--query", help="query string to be executed. Omit this argument or specify - (dash) to read from stdin", required=False)
+        arg_parser = argparse.ArgumentParser(prog="weaveq", description="Runs pivot and join queries across collections of data with support for various data sources, including Elasticsearch and JSON")
+        arg_parser.add_argument("-c", "--config", help="path to the configuration file. Required if using an Elasticsearch data source. Its format is documented at {0}".format(weaveq.build_constants.config_doc_url), required=False)
+        arg_parser.add_argument("-q", "--query", help="query string to be executed", required=True)
         arg_parser.add_argument("-o", "--output", help="path to the output file containing line-delimitted JSON query results. Omit this argument or specify - (dash) to write to stdout", required=False)
-        arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}{3}".format(build_constants.major_version, build_constants.minor_version, build_constants.release_version, build_constants.release_phase))
+        arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}{3}".format(weaveq.build_constants.major_version, weaveq.build_constants.minor_version, weaveq.build_constants.release_version, weaveq.build_constants.release_phase))
         
         self._args = {}
         if (mock_args is None):
@@ -192,24 +193,7 @@ class App(object):
         else:
             self._output_file = self._stdout
 
-        self._query_string = None
-        if (self._args["query"] is not None):
-            if (self._args["query"] == "-"):
-                # Read the query string from stdin
-                try:
-                    self._query_string = self._read_from_stdin()
-                except Exception as e:
-                    print("Couldn't read from stdin: {0}".format(str(e)))
-                    raise
-            else:
-                self._query_string = self._args["query"]
-        else:
-            # Read the query string from stdin
-            try:
-                self._query_string = self._read_from_stdin()
-            except Exception as e:
-                print("Couldn't read from stdin: {0}".format(str(e)))
-                raise
+        self._query_string = self._args["query"]
 
     def __del__(self):
         if (self._output_file is not None):
@@ -221,17 +205,9 @@ class App(object):
         if (self._stdout is not None):
             self._stdout.close()
 
-    def _read_from_stdin(self):
-        return_val = ""
-
-        for line in self._stdin:
-            return_val = "{0}{1}".format(return_val, line)
-
-        return return_val
-
     def run(self):
-        builder = datasources.AppDataSourceBuilder(self._config)
-        query_compiler = parser.TextQuery(builder)
+        builder = weaveq.datasources.AppDataSourceBuilder(self._config)
+        query_compiler = weaveq.parser.TextQuery(builder)
 
         try:
             compiled_query = query_compiler.compile_query(self._query_string)
