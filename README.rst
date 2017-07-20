@@ -1,7 +1,7 @@
 WeaveQ
 =======
 
-WeaveQ: A tool that pivots and joins across collections of Python objects, with special support for pivoting and joining Elasticsearch results.
+WeaveQ: A program and module for pivoting and joining across collections of Python dictionaries, with special support for pivoting and joining JSON files, CSV files and Elasticsearch resultsets.
 
 Introduction
 ------------
