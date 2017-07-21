@@ -2,7 +2,7 @@ import weaveq.build_constants
 import setuptools
 
 setuptools.setup(name='weaveq',
-    version="{0}.{1}.{2}{3}".format(weaveq.build_constants.major_version, weaveq.build_constants.minor_version, weaveq.build_constants.release_version, weaveq.build_constants.release_phase),
+    version="{0}.{1}.{2}-{3}".format(weaveq.build_constants.major_version, weaveq.build_constants.minor_version, weaveq.build_constants.release_version, weaveq.build_constants.release_phase),
     description="A program and module for pivoting and joining across collections of Python objects, with special support for pivoting and joining JSON files, CSV files and Elasticsearch resultsets",
     url=weaveq.build_constants.project_url,
     author='James Mistry',
