@@ -3,8 +3,8 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = JiggleQ
+SPHINXBUILD   = python -msphinx
+SPHINXPROJ    = WeaveQ
 SOURCEDIR     = source
 BUILDDIR      = build
 
