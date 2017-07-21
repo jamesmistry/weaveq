@@ -162,7 +162,7 @@ class App(object):
         arg_parser.add_argument("-c", "--config", help="path to the configuration file. Required if using an Elasticsearch data source. Its format is documented at {0}".format(weaveq.build_constants.config_doc_url), required=False)
         arg_parser.add_argument("-q", "--query", help="query string to be executed", required=True)
         arg_parser.add_argument("-o", "--output", help="path to the output file containing line-delimitted JSON query results. Omit this argument or specify - (dash) to write to stdout", required=False)
-        arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}{3}".format(weaveq.build_constants.major_version, weaveq.build_constants.minor_version, weaveq.build_constants.release_version, weaveq.build_constants.release_phase))
+        arg_parser.add_argument("--version", action="version", version="WeaveQ {0}.{1}.{2}-{3}".format(weaveq.build_constants.major_version, weaveq.build_constants.minor_version, weaveq.build_constants.release_version, weaveq.build_constants.release_phase))
         
         self._args = {}
         if (mock_args is None):
