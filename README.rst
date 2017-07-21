@@ -10,7 +10,7 @@ Getting Started
 
 In order to install WeaveQ you will need:
 
-- Python 2.7 or higher (WeaveQ is compatible with Python 3)
+- Python 2.7 or higher (WeaveQ runs under Python 3)
 - pip, a Python package installer (the pip package is usually called `python-pip` in Linux package repositories)
 
 For development of WeaveQ, you will need:
