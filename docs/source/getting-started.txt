@@ -1,0 +1,97 @@
+Getting Started
+===============
+
+Installing
+----------
+
+Install WeaveQ using pip (you may need to ``sudo``)::
+
+    $ pip install weaveq
+
+Note that WeaveQ only officially supports Linux for now.
+
+The Basics
+----------
+
+WeaveQ reads data from a set of data sources and uses information you provide
+about the relationships between these data sources to perform 'pivot' or 
+'join' operations.
+
+A pivot operation selects records from one data source based on there being 
+related records in a second data source, and then discards the records from 
+the second data source. A join operation merges records from one data 
+source into related records from a second data source. For a more detailed
+explanation, see :ref:`running-queries`
+
+As the name suggests, a data source is a WeaveQ component that retrieves data
+from an external source for use in join and pivot operations. WeaveQ 
+currently supports 4 data sources for use from within command line queries: 
+JSON lines, JSON, CSV and Elasticsearch.
+
+.. note::
+
+   You can write custom data source components for WeaveQ using the WeaveQ
+   API. For more details, see :ref:`overview-dev`
+
+Configuring
+-----------
+
+WeaveQ uses a configuration file to control data source settings. Currently,
+only the Elasticsearch and CSV data sources have settings that can be 
+configured.
+
+As a result, you only need to supply WeaveQ a configuration file if either:
+
+1. You want to use Elasticsearch as a data source.
+2. You don't want WeaveQ to use the first row of CSV files to determine field
+   names (in the absence of a configuration file, WeaveQ defaults to doing
+   this).
+
+You must specify the configuration as a JSON file and pass it to WeaveQ using
+the ``-c`` option. For example::
+
+    $ weaveq -c /path/to/config.json -q ...
+
+An example configuration file is shown below:
+
+.. code-block:: none
+
+    {
+        "data_sources" :
+        {
+            "elasticsearch" :
+            {
+                "hosts" : ["10.1.1.2:9200","10.1.1.3:9200"],
+                "timeout" : 10,
+                "use_ssl" : false,
+                "verify_certs" : false,
+                "ca_certs" : "/path/to/ca/certs",
+                "client_cert" : "/path/to/client/cert",
+                "client_key" : "/path/to/client/key"
+            }
+            "csv" :
+            {
+                "first_row_contains_field_names" : true
+            }
+        }
+    }
+
+==================================  ======================================================================  ====================
+Configuration Item                  Description                                                             Required?
+==================================  ======================================================================  ====================
+elasticsearch/hosts                 An array of the host names/addresses and ports of Elasticsearch nodes.  Only if using the 
+                                                                                                            Elasticsearch data
+                                                                                                            source within a 
+                                                                                                            query
+elasticsearch/timeout               Global Elasticsearch timeout. Default = 10                              No
+elasticsearch/use_ssl               Whether or not to use SSL in Elasticsearch communication. Default =     No
+                                    false                                                                   
+elasticsearch/verify_certs          Whether or not to verify SSL certificates. Default = false              No
+elasticsearch/ca_certs              Path to CA (certificate authority) certificate files. Default = none    No
+elasticsearch/client_cert           Path to a PEM-formatted SSL client certificate file. Default = none     No
+elasticsearch/client_key            Path to a PEM-formatted SSL client key. Default = none                  No
+csv/first_row_names                 Whether or not the first row of CSV files should be used to define      No
+                                    field names. If not, fields will be named column_n, where n is 
+                                    the index (starting at 0) of the CSV column from which the field was
+                                    read. Default = true
+==================================  ======================================================================  ====================

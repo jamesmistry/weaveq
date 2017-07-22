@@ -1,16 +1,33 @@
-.. WeaveQ documentation master file, created by
-   sphinx-quickstart on Thu Jul 20 22:33:46 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to WeaveQ!
+==================
 
-Welcome to WeaveQ's documentation!
-==================================
+WeaveQ is a program and module for pivoting and joining across collections of 
+data, with special support for pivoting and joining across JSON files, CSV 
+files and Elasticsearch resultsets.
+
+Using WeaveQ from the command line consists of passing a WeaveQ query string 
+that specifies how to join or pivot across records from multiple data sources 
+based on relationships between fields. Using WeaveQ from its Python API 
+consists of specifying join and pivot behaviour programmatically and using 
+custom callbacks to fetch data from data sources, optionally transform field 
+values and output results. The WeaveQ query parser API can even be used to 
+provide a customised textual query interface.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: User Documentation
 
+   getting-started
+   running-queries
+   examples-user
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Documentation
+
+   overview-dev
+   query-from-code
+   examples-dev
 
 Indices and tables
 ==================
