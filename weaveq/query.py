@@ -533,7 +533,7 @@ class WeaveQ(object):
                                 for eq_match in eq_matches:
                                     match_callback(instr, result, eq_match)
 
-                            cond_group_satisfied = ((instr["exclude_empty_matches"]) and (match_callback.count > 0)) or (not instr["exclude_empty_matches"])
+                            cond_group_satisfied = ((cond_group_index == len(filter_conditions) - 1) and (((instr["exclude_empty_matches"]) and (match_callback.count > 0)) or (not instr["exclude_empty_matches"])))
                             if (cond_group_satisfied):
                                 break
 
