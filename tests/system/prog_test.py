@@ -106,7 +106,7 @@ class TestProg(unittest.TestCase):
         config = tempfile.mkstemp()
         try:
             with open(config[1], "w") as f:
-                f.write('{"data_sources":{"elasticsearch":{}, "csv":{"first_row_contains_field_names":true}}}')
+                f.write('{"data_sources":{"elasticsearch":{}, "csv":{"first_row_names":true}}}')
             runner = AppRunner()
             runner.run('#from "el:test_index" #as test1 #pivot-to "el:test_index_2" #as test2 #where test1.f = test2.f', config_file = config[1])
             self.assertEquals(runner.exit_code, 1)

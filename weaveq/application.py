@@ -52,7 +52,7 @@ class Config(object):
 
     @staticmethod
     def default_config():
-        return {"data_sources":{"elasticsearch":None,"csv":{"first_row_contains_field_names":True}}}
+        return {"data_sources":{"elasticsearch":None,"csv":{"first_row_names":True}}}
 
     def __init__(self, config_filename = None):
         """!
@@ -133,7 +133,7 @@ class Config(object):
             self._validate_item(config_data, "data_sources/elasticsearch/client_key", six.string_types)
 
         self._validate_item(config_data, "data_sources/csv", dict)
-        self._validate_item(config_data, "data_sources/csv/first_row_contains_field_names", bool)
+        self._validate_item(config_data, "data_sources/csv/first_row_names", bool)
 
         self.config = config_data
 

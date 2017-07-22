@@ -147,7 +147,7 @@ class TestElasticIntegration(unittest.TestCase):
         config = tempfile.mkstemp()
         try:
             with open(config[1], "w") as f:
-                f.write(json.dumps({"data_sources":{"elasticsearch":{"hosts":["{0}:{1}".format(elastic_host, elastic_port)]}, "csv":{"first_row_contains_field_names":True}}}))
+                f.write(json.dumps({"data_sources":{"elasticsearch":{"hosts":["{0}:{1}".format(elastic_host, elastic_port)]}, "csv":{"first_row_names":True}}}))
 
             runner = prog_test.AppRunner()
             runner.run('#from "el:weaveqsystest_set0" #as set0 #filter |*| #pivot-to "el:weaveqsystest_set1" #as set1 #filter |*| #where set0.key_0_1=set1.key_1_1 #join-to "el:weaveqsystest_set2" #as set2 #filter |*| #where set1.key_1_0 = set2.key_2_0 and set1.key_1_1 = set2.key_2_1 and set1.key_1_2 = set2.key_2_2 #field-name joined_rec #array #exclude-empty', config_file = config[1])

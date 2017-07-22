@@ -107,28 +107,28 @@ class TestConfig(unittest.TestCase):
         """Minimum valid config
         """
         subject = Config()
-        subject.apply_config({"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":True}}})
-        self.assertEquals(subject.config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
+        subject.apply_config({"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_names":True}}})
+        self.assertEquals(subject.config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_names":True}}})
 
     def test_config_default_overrides(self):
         """Config with default field values overridden
         """
         subject = Config()
-        subject.apply_config({"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_contains_field_names":True}}})
-        self.assertEquals(subject.config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_contains_field_names":True}}})
+        subject.apply_config({"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_names":True}}})
+        self.assertEquals(subject.config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_names":True}}})
 
     def test_config_file(self):
         """Minimum valid config from file
         """
         tmpfile = tempfile.mkstemp()
-        json_config = json.dumps({"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_contains_field_names":False}}})
+        json_config = json.dumps({"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":20, "use_ssl":True, "verify_certs":True, "ca_certs":"/test/ca/cert", "client_cert":"/test/client/cert", "client_key":"/test/client/key"},"csv":{"first_row_names":False}}})
 
         with open(tmpfile[1], "w") as config_file:
             config_file.write(json_config)
 
         try:
             subject = Config(tmpfile[1])
-            self.assertEquals(subject.config, {u"data_sources":{u"elasticsearch":{u"hosts":[u"test1",u"test2"], u"timeout":20, u"use_ssl":True, u"verify_certs":True, u"ca_certs":u"/test/ca/cert", u"client_cert":u"/test/client/cert", u"client_key":u"/test/client/key"},"csv":{"first_row_contains_field_names":False}}})
+            self.assertEquals(subject.config, {u"data_sources":{u"elasticsearch":{u"hosts":[u"test1",u"test2"], u"timeout":20, u"use_ssl":True, u"verify_certs":True, u"ca_certs":u"/test/ca/cert", u"client_cert":u"/test/client/cert", u"client_key":u"/test/client/key"},"csv":{"first_row_names":False}}})
         finally:
             os.close(tmpfile[0])
             os.unlink(tmpfile[1])
@@ -161,19 +161,19 @@ class TestApp(unittest.TestCase):
 
     def test_config_valid_explicit_query_string(self):
         with open(self._config_file[1], "w") as config_file:
-            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":true}}}')
+            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_names":true}}}')
 
         subject = App(mock_args=["-c", self._config_file[1], "-q", "placeholder_query_string"])
-        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
+        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_names":True}}})
         self.assertEquals(subject._query_string, "placeholder_query_string")
         self.assertEquals(subject._output_file, subject._stdout)
 
     def test_output_file_omitted(self):
         with open(self._config_file[1], "w") as config_file:
-            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_contains_field_names":true}}}')
+            config_file.write('{"data_sources":{"elasticsearch":{"hosts":["test1","test2"]},"csv":{"first_row_names":true}}}')
 
         subject = App(mock_args=["-c", self._config_file[1], "-q", "placeholder_query_string", "-o", self._mock_stdout[1]])
-        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_contains_field_names":True}}})
+        self.assertEquals(subject._config, {"data_sources":{"elasticsearch":{"hosts":["test1","test2"], "timeout":10, "use_ssl":False, "verify_certs":False, "ca_certs":None, "client_cert":None, "client_key":None},"csv":{"first_row_names":True}}})
         self.assertEquals(subject._query_string, "placeholder_query_string")
         self.assertNotEquals(subject._output_file, subject._stdout)
 

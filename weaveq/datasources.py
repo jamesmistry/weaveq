@@ -175,7 +175,7 @@ class CsvDataSource(weaveq.query.DataSource, DiscoverableDataSource):
 
         @param filename string: path to the CSV file from which to read the data
         @param filter_string string: not applicable to this data source - must be @c None or an exception will be raised
-        @param config dict: a dictionary containing a single boolean element called first_row_contains_field_names that determines whether or not the first CSV row should be used to define the field names of parsed objects
+        @param config dict: a dictionary containing a single boolean element called first_row_names that determines whether or not the first CSV row should be used to define the field names of parsed objects
         """
         # Only call the query.DataSource constructor
         super(CsvDataSource, self).__init__(filename, filter_string)
@@ -192,7 +192,7 @@ class CsvDataSource(weaveq.query.DataSource, DiscoverableDataSource):
 
         ## @var first_row_field_names
         # Does the first row of the CSV file contain field names?
-        self.first_row_field_names = config["first_row_contains_field_names"]
+        self.first_row_field_names = config["first_row_names"]
 
     @staticmethod
     def string_idents():

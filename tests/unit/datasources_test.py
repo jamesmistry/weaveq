@@ -283,7 +283,7 @@ class TestConfig(unittest.TestCase):
                 config_file.write(test_data)
 
         try:
-            subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})
+            subject = CsvDataSource(tmpfile[1], None, {"first_row_names":True})
             self.assertEquals(subject.batch(), [{"field_a":"row0cola", "field_b":"row0colb", "field_c":"row0colc"},{"field_a":"row1cola", "field_b":"row1colb", "field_c":"row1colc"},{"field_a":"row2cola", "field_b":"row2colb", "field_c":"row2colc"}])
         finally:
             os.close(tmpfile[0])
@@ -301,7 +301,7 @@ class TestConfig(unittest.TestCase):
                 config_file.write(test_data)
 
         try:
-            subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})
+            subject = CsvDataSource(tmpfile[1], None, {"first_row_names":True})
             result = []
             for record in subject.stream():
                 result.append(record)
@@ -323,7 +323,7 @@ class TestConfig(unittest.TestCase):
                 config_file.write(test_data)
 
         try:
-            subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":False})
+            subject = CsvDataSource(tmpfile[1], None, {"first_row_names":False})
             self.assertEquals(subject.batch(), [{"column_1":"row0cola", "column_2":"row0colb", "column_3":"row0colc"},{"column_1":"row1cola", "column_2":"row1colb", "column_3":"row1colc"},{"column_1":"row2cola", "column_2":"row2colb", "column_3":"row2colc"}])
         finally:
             os.close(tmpfile[0])
@@ -341,7 +341,7 @@ class TestConfig(unittest.TestCase):
                 config_file.write(test_data)
 
         try:
-            subject = CsvDataSource(tmpfile[1], None, {"first_row_contains_field_names":True})
+            subject = CsvDataSource(tmpfile[1], None, {"first_row_names":True})
             self.assertEquals(subject.batch(), [{u"กว่า":u"κόσμε", u"áðan":"row0colb", u"τὴν":"row0colc"},{u"กว่า":"row1cola", u"áðan":u"Heizölrückstoßabdämpfung", u"τὴν":"row1colc"},{u"กว่า":"row2cola", u"áðan":"row2colb", u"τὴν":u"いろはにほへとちりぬるを"}])
         finally:
             os.close(tmpfile[0])
