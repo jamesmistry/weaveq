@@ -615,6 +615,28 @@ class TestWeaveQ(unittest.TestCase):
         s.execute(stream=False)
         self.assertEqual(r.results, [{"name_id":1,"type":"a","custom_field_name":{"id":1,"name":"a"}}])
 
+    def test_join_non_first_or_expression_no_exclude_empties(self):
+        """Join test: or'ed expressions are not short-cutted when including empty matches"""
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3,"name":"c"},{"id":4,"name":"f"}]])
+        q2 = MockDataSource([[{"name_id":5,"type":"a"},{"name_id":6,"type":"b"},{"name_id":99,"type":"z"}]])
+
+        s = WeaveQ(q1).join_to(q2, ((F("id") == F("name_id")) | (F("name") == F("type"))), field="custom_field_name", array=False, exclude_empty_joins=False)
+        s.result_handler(r)
+        s.execute(stream=False)
+        self.assertEqual(r.results, [{"name_id":5,"type":"a","custom_field_name":{"id":1,"name":"a"}},{"name_id":6,"type":"b","custom_field_name":{"id":2,"name":"b"}},{"name_id":99,"type":"z"}])
+
+    def test_join_non_first_or_expression_exclude_empties(self):
+        """Join test: or'ed expressions are not short-cutted when not excluding empty matches"""
+        r = TestResultHandler()
+        q1 = MockDataSource([[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3,"name":"c"},{"id":4,"name":"f"}]])
+        q2 = MockDataSource([[{"name_id":5,"type":"a"},{"name_id":6,"type":"b"},{"name_id":99,"type":"z"}]])
+
+        s = WeaveQ(q1).join_to(q2, ((F("id") == F("name_id")) | (F("name") == F("type"))), field="custom_field_name", array=False, exclude_empty_joins=True)
+        s.result_handler(r)
+        s.execute(stream=False)
+        self.assertEqual(r.results, [{"name_id":5,"type":"a","custom_field_name":{"id":1,"name":"a"}},{"name_id":6,"type":"b","custom_field_name":{"id":2,"name":"b"}}])
+
     def test_join_no_array_multi_results(self):
         """Join test: exclude empty joins, array"""
         r = TestResultHandler()
