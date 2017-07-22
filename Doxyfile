@@ -44,7 +44,7 @@ PROJECT_NUMBER         = 1
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "A tool that pivots and joins across collections of Python objects, with special support for pivoting and joining Elasticsearch results."
+PROJECT_BRIEF          = "A program and module for pivoting and joining across collections of data, with special support for pivoting and joining across JSON files, CSV files and Elasticsearch resultsets."
 
 # With the PROJECT_LOGO tag one can specify an logo or icon that is included in
 # the documentation. The maximum height of the logo should not exceed 55 pixels
