@@ -27,26 +27,6 @@ class FirstCharProxy(object):
         self.count += 1
         return value[0]
 
-class TestResult(object):
-    def __init__(self, data):
-        self._data = data
-
-    def to_dict(self):
-        return self._data
-
-class TestResults(object):
-    def __init__(self, data, success=True):
-        self._simulated_success = success
-        self._data = []
-        for obj in data:
-            self._data.append(TestResult(obj).to_dict())
-
-    def __iter__(self):
-        return self._data.__iter__()
-
-    def success(self):
-        return self._simulated_success
-
 class TestResultHandler(object):
 
     def __init__(self, success=True):
@@ -87,7 +67,9 @@ class MockDataSource(object):
         return_val = None
 
         if (self._cursor < len(self.data)):
-            return_val = TestResults(self.data[self._cursor], success=self._simulated_success)
+            if (not self._simulated_success):
+                raise Exception("Data source error")
+            return_val = self.data[self._cursor]
             self._cursor += 1
 
         return return_val
@@ -679,7 +661,8 @@ class TestWeaveQ(unittest.TestCase):
         q2 = MockDataSource([[{"name_id":1,"count":10},{"name_id":6,"count":11},{"name_id":5,"count":12},{"name_id":4,"count":13}]])
         s = WeaveQ(q1).pivot_to(q2, F("id") == F("name_id"))
         s.result_handler(r)
-        self.assertFalse(s.execute(stream=False))
+        with self.assertRaises(Exception):
+            s.execute(stream=False)
 
     def test_missing_field(self):
         """Missing field"""
