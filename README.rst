@@ -12,7 +12,7 @@ Getting Started
 
 In order to install WeaveQ you will need:
 
-- Python 2.7 or higher (WeaveQ runs under Python 3)
+- Python 2.7 or higher (including Python 3)
 - pip, a Python package installer (the pip package is usually called 
   ``python-pip`` in Linux package repositories)
 
@@ -78,8 +78,12 @@ and runs with multiple Python versions. To successfully test both Python 2.7
 and Python 3 compatibility, you need to have these interpreters installed on 
 your system.
 
-Note in particular that WeaveQ compatibility with the following has not been 
-tested in this release (though this doesn't necessarily mean it won't work):
+To run the performance tests, from the repository root run::
+
+    $ python perf_tests.py
+
+Note that WeaveQ compatibility with the following has not been tested in this 
+release (though this doesn't necessarily mean it won't work):
 
 - Python versions < 2.7.6 or > 3.4
 - Operating systems other than Linux
@@ -91,12 +95,14 @@ Deployment
 In order to use Elasticsearch data sources in WeaveQ queries, you must supply 
 a configuration file on the command line. This file specifies the 
 addresses/host names of Elasticsearch nodes, authentication certificates and 
-other settings. If deploying to a controlled environment with an Elasticsearch
-instance that you want users to access by default, consider providing a 
-pre-written configuration file (for example, in ``/etc/weaveq``) so that users 
-can get up and running quickly. You may also want to alias the ``weaveq`` 
-command to specify the default configuration without requiring users to 
-specify the ``--config`` option.
+other settings.
+
+If deploying to a controlled environment with an Elasticsearch instance that 
+you want users to access by default, consider providing a pre-written 
+configuration file (for example, in ``/etc/weaveq``) so that users can get up 
+and running quickly. You may also want to alias the ``weaveq`` command to 
+specify the default configuration without requiring users to specify the 
+``--config`` option.
 
 The configuration file format is documented at 
 <https://readthedocs.org/projects/weaveq/>
