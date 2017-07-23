@@ -103,7 +103,7 @@ class F(object):
         If no field proxy is specified, a default transparent one is used.
 
         @param name String: name of the field
-        @param proxy object: object to use as the field value proxy. It must expose a method with the following signature: \_\_call\_\_(self, name, value)
+        @param proxy object: object to use as the field value proxy. It must expose a method with the following signature: \_\_call\_\_(self, name, value) and return the value to be used
         """
 
         ## @var name
