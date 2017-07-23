@@ -33,6 +33,14 @@ class DataSource(object):
 
     __metaclass__ = abc.ABCMeta
 
+    """!
+    Constructor.
+
+    Validation of the URI and filter string should happen here, and exceptions raised on error.
+
+    @param uri string: Specifies the location of the desired data. Its specific form and meaning is defined by the concrete DataSource.
+    @param filter_string string: Specifies how to select what data to retrieve. May be @c None. Its specific form and meaning is defined by the concrete DataSource.
+    """
     def __init__(self, uri, filter_string):
         pass
 
@@ -52,35 +60,9 @@ class DataSource(object):
 
         This method will only be called by WeaveQ if the client passes @c True as the @c stream parameter of @c WeaveQ.execute()
 
-        @return An iterable object that provides access to the individual result objects from the data source.
+        @return A generator iterator that provides access to the individual result objects from the data source.
         """
         pass
-
-class ResultShim(object):
-    """!
-    Step result.
-    """
-    def __init__(self, data):
-        """!
-        Constructor.
-
-        @param data: data source object
-        """
-        self._data = data
-
-    def success(self):
-        """!
-        Is the result data available?
-
-        @return True if the data from the data source was available, False otherwise
-        """
-        return True
-
-    def __iter__(self):
-        """!
-        Get an iterator to the result data.
-        """
-        return self._data
 
 class ResultHandler(object):
     """!
@@ -107,18 +89,6 @@ class ResultHandler(object):
         @return @c True if there have been no errors, @c False otherwise
         """
         pass
-
-class ScrollShim(ResultShim):
-    """!
-    Specialisation of ResultShim for use when using the scan API so that debug output can be emitted.
-    """
-    def __init__(self, data):
-        """!
-        Constructor.
-
-        @param data object: Data that is to be used by the query step.
-        """
-        super(ScrollShim, self).__init__(data)
 
 class StdoutResultHandler(ResultHandler):
     """!
@@ -555,7 +525,7 @@ class WeaveQ(object):
 
         @return @c response if successful or @c None otherwise 
         """
-        if (response.success()):
+        try:
             handler = None
             if (len(index_conditions) > 0):
                 handler = IndexResultHandler(index_conditions)
@@ -569,7 +539,7 @@ class WeaveQ(object):
             else:
                 return None
 
-        else:
+        except:
             return None
 
     def _stage_after(self, instr):
@@ -616,7 +586,7 @@ class WeaveQ(object):
         response = None
 
         try:
-            response = self._process_response(instr, ScrollShim(instr["q"].stream()) if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
+            response = self._process_response(instr, instr["q"].stream() if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
         except Exception as e:
             raise
 
