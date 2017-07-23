@@ -19,19 +19,10 @@ provide a customised textual query interface.
 
    getting-started
    running-queries
-   examples-user
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer Documentation
 
-   overview-dev
    query-from-code
-   examples-dev
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

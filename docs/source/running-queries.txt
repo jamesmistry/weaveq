@@ -66,6 +66,13 @@ Multiple field relationships can be expressed using logical ``and`` and
 
    ... #where (b.color = c.color and b.make != c.make) or b.speed = c.speed
 
+You can refer to fields in sub-objects by chaining names separated by dots 
+together:
+
+.. code-block:: none
+
+   c.roof.color
+
 Filters
 ~~~~~~~
 

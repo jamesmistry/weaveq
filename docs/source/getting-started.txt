@@ -8,7 +8,34 @@ Install WeaveQ using pip (you may need to ``sudo``)::
 
     $ pip install weaveq
 
-Note that WeaveQ only officially supports Linux for now.
+.. note::
+
+   WeaveQ only officially supports Linux for now.
+
+Running
+-------
+
+Pivot from a CSV file to a JSON file to find bikes and cars of the same 
+colour, writing the output to ``stdout``:
+
+.. code-block:: none
+
+   weaveq -q '#from "csv:bikes.csv" #as b #pivot-to "js:cars.json" #as c #where b.color = c.color'
+
+Run the same query, but write the output to another file:
+
+.. code-block:: none
+
+   weaveq -o /path/to/out/file.jsonlines -q '#from "csv:bikes.csv" #as b #pivot-to "js:cars.json" #as c #where b.color = c.color'
+
+Supply a :ref:`configuration file <config>` and use Elasticsearch results as 
+part of the query to join Honda bikes to cars of the same colour:
+
+.. code-block:: none
+   
+   weaveq -c config.json -q '#from "el:bikes" #as b #filter |make:honda| #join-to "jsl:cars.jsonlines" #as c #where b.color = c.color'
+
+For more details, see :ref:`running-queries`
 
 The Basics
 ----------
@@ -32,6 +59,11 @@ JSON lines, JSON, CSV and Elasticsearch.
 
    You can write custom data source components for WeaveQ using the WeaveQ
    API. For more details, see :ref:`overview-dev`
+
+WeaveQ always outputs line-separated JSON, either to ``stdout`` or to a file
+you specify using the ``-o`` command line option.
+
+.. _config:
 
 Configuring
 -----------
