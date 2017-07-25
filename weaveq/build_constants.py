@@ -15,7 +15,7 @@
 
 from __future__ import print_function, absolute_import
 
-config_doc_url = "https://readthedocs.org/projects/weaveq/"
+config_doc_url = "http://weaveq.readthedocs.io/en/latest/"
 project_url = "http://github.com/jamesmistry/weaveq"
 major_version = "0"
 minor_version = "1"
