@@ -525,22 +525,19 @@ class WeaveQ(object):
 
         @return @c response if successful or @c None otherwise 
         """
-        try:
-            handler = None
-            if (len(index_conditions) > 0):
-                handler = IndexResultHandler(index_conditions)
-            else:
-                handler = self._result_handler
+        handler = None
+        if (len(index_conditions) > 0):
+            handler = IndexResultHandler(index_conditions)
+        else:
+            handler = self._result_handler
                     
-            self._filter_and_store(instr, response, filter_conditions, handler)
+        self._filter_and_store(instr, response, filter_conditions, handler)
 
-            if (handler.success()):
-                return response
-            else:
-                return None
-
-        except:
+        if (handler.success()):
+            return response
+        else:
             return None
+
 
     def _stage_after(self, instr):
         """!
@@ -585,10 +582,7 @@ class WeaveQ(object):
         """
         response = None
 
-        try:
-            response = self._process_response(instr, instr["q"].stream() if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
-        except Exception as e:
-            raise
+        response = self._process_response(instr, instr["q"].stream() if instr["scroll"] else instr["q"].batch(), [] if (instr["conjunctions"] is None) else instr["conjunctions"], [] if (instr["conditions"] is None) else instr["conditions"].conjunctions)
 
         if (response is None):
             return False
@@ -603,21 +597,18 @@ class WeaveQ(object):
 
         @see DataSource
         """
-        try:
-            self.result = {}
-            stage_index = 0
-            for instr in self._instructions:
-                instr["scroll"] = stream
-                if (not self._execute_instruction(instr)):
-                    return False
-                else:
-                    after_event = self._instruction_set[instr["op"]]["after"]
-                    if (after_event is not None):
-                        after_event(instr)
+        self.result = {}
+        stage_index = 0
+        for instr in self._instructions:
+            instr["scroll"] = stream
+            if (not self._execute_instruction(instr)):
+                return False
+            else:
+                after_event = self._instruction_set[instr["op"]]["after"]
+                if (after_event is not None):
+                    after_event(instr)
 
-                stage_index += 1
-        except Exception as e:
-            raise
+            stage_index += 1
 
         return True
 
