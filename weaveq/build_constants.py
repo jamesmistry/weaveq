@@ -19,5 +19,6 @@ config_doc_url = "http://weaveq.readthedocs.io/en/latest/"
 project_url = "http://github.com/jamesmistry/weaveq"
 major_version = "0"
 minor_version = "1"
-release_version = "0"
+release_version = "4"
 release_phase = ""
+version_string = "{0}.{1}.{2}{3}{4}".format(major_version, minor_version, release_version, "-" if (len(release_phase) > 0) else "", release_phase)
